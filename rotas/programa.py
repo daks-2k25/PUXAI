@@ -3,7 +3,7 @@ import threading
 
 from flask import Blueprint, jsonify, request
 
-from servicos import destinos, preferencias, programa, sistema
+from servicos import destinos, estatisticas, preferencias, programa, sistema
 from servicos.janela import barra_de_titulo_escura, trazer_para_frente
 
 rotas = Blueprint("programa", __name__)
@@ -48,6 +48,9 @@ def dados_das_preferencias():
         "tema": preferencias.tema(),               # o escolhido: automatico, claro ou escuro
         "tema_em_uso": preferencias.tema_em_uso(),  # claro ou escuro (automático = o do sistema)
         "detectar_link": preferencias.detectar_link(),  # avisar quando copiar um link de vídeo
+        # Estatísticas anônimas: só aparecem se houver para onde enviar; null = ainda não respondeu
+        "estatisticas_disponivel": estatisticas.disponivel(),
+        "estatisticas": estatisticas.permissao(),
     }
 
 
@@ -60,8 +63,12 @@ def preferencias_api():
 def salvar_preferencias_api():
     # Configurações do painel: abrir na janela ou no navegador, e o tema (claro, escuro, automático)
     dados = request.get_json(silent=True) or {}
-    if not {"modo_abertura", "tema", "detectar_link"} & dados.keys():
-        return jsonify({"erro": "Envie modo_abertura, tema e/ou detectar_link."}), 400
+    if not {"modo_abertura", "tema", "detectar_link", "estatisticas"} & dados.keys():
+        return jsonify({"erro": "Envie modo_abertura, tema, detectar_link e/ou estatisticas."}), 400
+    if "estatisticas" in dados:
+        if not isinstance(dados["estatisticas"], bool):
+            return jsonify({"erro": "estatisticas deve ser true ou false."}), 400
+        preferencias.salvar("estatisticas", dados["estatisticas"])
     if "detectar_link" in dados:
         if not isinstance(dados["detectar_link"], bool):
             return jsonify({"erro": "detectar_link deve ser true ou false."}), 400

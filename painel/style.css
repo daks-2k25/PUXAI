@@ -404,6 +404,33 @@ h1 span {
     display: none;
 }
 
+/* Aviso das estatísticas anônimas (mesmo visual do aviso de versão nova) */
+.estatisticas p {
+    margin-bottom: 10px;
+    color: var(--texto-medio);
+    font-size: 14px;
+}
+
+.estatisticas details {
+    margin-bottom: 14px;
+    font-size: 14px;
+}
+
+.estatisticas summary {
+    color: var(--destaque);
+    cursor: pointer;
+}
+
+.estatisticas details ul {
+    margin: 8px 0 0 18px;
+}
+
+.estatisticas .estatisticas-dica {
+    margin: 10px 0 0;
+    color: var(--texto-suave);
+    font-size: 13px;
+}
+
 .atualizacao-botoes {
     display: flex;
     flex-wrap: wrap;
@@ -902,6 +929,10 @@ input[type="url"]:focus,
     gap: 8px;
     font-size: 14px;
     cursor: pointer;
+}
+
+.config-caixa[hidden] {
+    display: none;
 }
 
 .config-caixa input {

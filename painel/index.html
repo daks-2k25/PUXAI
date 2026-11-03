@@ -82,6 +82,11 @@
             <p id="config-pastas-dica" class="config-dica"></p>
           </div>
 
+          <label class="config-caixa config-secao" id="config-estatisticas-linha" hidden>
+            <input type="checkbox" id="config-estatisticas" />
+            Enviar estatísticas anônimas de uso (sites e erros, sem links nem nada que identifique você)
+          </label>
+
           <div class="config-secao">
             <button type="button" id="config-relatar" class="botao-texto">⚠ Algo deu errado? Relatar um problema</button>
           </div>
@@ -96,6 +101,25 @@
       </header>
 
       <!-- Aviso de versão nova (preenchido pelo script.js com /api/versao) -->
+      <!-- Estatísticas anônimas: pergunta uma vez (só aparece se houver para onde enviar) -->
+      <div id="aviso-estatisticas" class="atualizacao estatisticas escondido">
+        <strong>Ajude a melhorar o Puxaí?</strong>
+        <p>O Puxaí pode enviar estatísticas anônimas: quais sites você usa e quais deram erro. Assim dá para saber o que consertar primeiro. Nada de links, títulos ou qualquer coisa que identifique você.</p>
+        <details>
+          <summary>O que é enviado</summary>
+          <ul>
+            <li>Ao abrir: a versão do Puxaí, o sistema (ex.: Windows 11), o idioma e se abriu na janela ou no navegador.</li>
+            <li>Ao terminar um download: o site (ex.: YouTube), MP4 ou MP3 e a qualidade, e se deu certo, deu erro (com a mensagem do Puxaí) ou foi cancelado.</li>
+            <li>Nunca: links, títulos, nomes de arquivos, pastas ou nome de usuário. O serviço que recebe (Aptabase) não guarda o IP nem identifica ninguém.</li>
+          </ul>
+        </details>
+        <div class="atualizacao-botoes">
+          <button type="button" id="estatisticas-sim" class="botao-atualizar">Sim, pode enviar</button>
+          <button type="button" id="estatisticas-nao" class="botao-depois">Não, obrigado</button>
+        </div>
+        <p class="estatisticas-dica">Dá para mudar quando quiser em ⚙ Configurações.</p>
+      </div>
+
       <div id="aviso-atualizacao" class="atualizacao escondido">
         <strong id="atualizacao-titulo"></strong>
         <ul id="atualizacao-novidades"></ul>

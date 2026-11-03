@@ -80,6 +80,15 @@ if sys.stdout is None or sys.stderr is None:
     sys.stdout = sys.stdout or registro
     sys.stderr = sys.stderr or registro
 
+# Saída indo para um arquivo (ex.: o iniciar.sh manda para o Puxai.log): grava cada
+# linha na hora. Sem isso, o Python junta as mensagens e o que faltava gravar se
+# perde quando o programa encerra (os._exit), justamente quando algo deu errado.
+for _saida in (sys.stdout, sys.stderr):
+    try:
+        _saida.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
+
 # Se tiver o FFmpeg ao lado do programa, usa ele (não precisa instalar no PC).
 # No Linux, o iniciar.sh baixa o FFmpeg para a pasta .ffmpeg se o sistema não tiver.
 # No programa gerado para Linux, o Deno também fica ao lado (o yt-dlp procura no PATH).

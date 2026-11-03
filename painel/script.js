@@ -1526,7 +1526,10 @@ aplicarTema(raiz.dataset.temaEscolhido || "automatico");
 const caixaDetectarLink = document.getElementById("config-detectar-link");
 fetch("/api/preferencias")
     .then((r) => r.json())
-    .then((dados) => (caixaDetectarLink.checked = dados.detectar_link !== false))
+    .then((dados) => {
+        caixaDetectarLink.checked = dados.detectar_link !== false;
+        mostrarEstatisticas(dados);
+    })
     .catch(() => {});
 caixaDetectarLink.addEventListener("change", async () => {
     const ligado = caixaDetectarLink.checked;
@@ -1537,6 +1540,35 @@ caixaDetectarLink.addEventListener("change", async () => {
         body: JSON.stringify({ detectar_link: ligado }),
     }).catch(() => null);
     if (!resposta || !resposta.ok) caixaDetectarLink.checked = !ligado;
+});
+
+// Estatísticas anônimas: só existem se o programa tiver para onde enviar.
+// Pergunta uma vez (aviso no topo); depois, a caixinha nas Configurações.
+const avisoEstatisticas = document.getElementById("aviso-estatisticas");
+const caixaEstatisticas = document.getElementById("config-estatisticas");
+
+function mostrarEstatisticas(dados) {
+    if (!dados.estatisticas_disponivel) return;
+    document.getElementById("config-estatisticas-linha").hidden = false;
+    caixaEstatisticas.checked = dados.estatisticas === true;
+    avisoEstatisticas.classList.toggle("escondido", dados.estatisticas !== null);
+}
+
+async function salvarEstatisticas(ligado) {
+    const resposta = await fetch("/api/preferencias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estatisticas: ligado }),
+    }).catch(() => null);
+    if (!resposta || !resposta.ok) return false;
+    mostrarEstatisticas(await resposta.json());
+    return true;
+}
+
+document.getElementById("estatisticas-sim").addEventListener("click", () => salvarEstatisticas(true));
+document.getElementById("estatisticas-nao").addEventListener("click", () => salvarEstatisticas(false));
+caixaEstatisticas.addEventListener("change", async () => {
+    if (!(await salvarEstatisticas(caixaEstatisticas.checked))) caixaEstatisticas.checked = !caixaEstatisticas.checked;
 });
 
 // ==========================================

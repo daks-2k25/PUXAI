@@ -127,6 +127,7 @@ Com a extensão, não precisa copiar e colar o link: num vídeo aberto no navega
 - **Para fechar:** feche a janela. Se ainda houver download em andamento, o programa pergunta antes.
 - **Ícone perto do relógio (bandeja do Windows e do Linux):** enquanto o Puxaí está aberto, o ícone dele fica ali. **Clique** para abrir (traz a janela para a frente, ou abre o painel no navegador); com o **botão direito**, o menu tem **Abrir o Puxaí**, **Abrir no navegador**, **Abrir a pasta dos arquivos** e **Encerrar o Puxaí** (que pergunta antes se ainda há downloads ou compressões em andamento). Parando o mouse em cima, aparece quantos itens estão em andamento. No modo navegador, é o jeito mais fácil de fechar o programa. Se o ícone estiver escondido, ele fica na setinha **^** ao lado do relógio.
 - **Relatar um problema:** num download que deu erro, clique em **⚠ Relatar problema** (para outros problemas: **⚙ Configurações → Algo deu errado? Relatar um problema**). Abre uma janela com o relatório pronto: versões do Puxaí, do yt-dlp e do FFmpeg, o sistema, o site e o erro do download, e as últimas linhas de erro do `Puxai.log`. Ele sai **sem dados pessoais**: o nome de usuário e as pastas viram `~`, os links ficam só com o site (ex.: `youtube.com`) e e-mails e o código dos vídeos são tirados. Dá para escrever o que aconteceu e apagar o que quiser do texto antes de enviar. **Enviar pelo GitHub** abre a página de novo *Issue* já preenchida (precisa de conta, grátis); **Enviar por e-mail** abre o programa de e-mail (aparece quando o e-mail de suporte estiver configurado em `servicos/relatorio.py`, `EMAIL_SUPORTE`); **Copiar** põe o texto na área de transferência, para mandar por WhatsApp, por exemplo.
+- **Estatísticas anônimas (opcional):** quando estiverem ligadas no programa (veja [Estatísticas anônimas](#estatísticas-anônimas)), o Puxaí pergunta uma vez se pode enviar estatísticas de uso: quais sites a pessoa usa e quais deram erro. **Sem resposta, nada é enviado.** Dá para mudar quando quiser em **⚙ Configurações → Enviar estatísticas anônimas de uso**.
 - **Fechou no meio de um download?** Na próxima vez que o Puxaí abrir, os downloads que estavam na fila ou baixando voltam sozinhos, e continuam de onde pararam (o que já tinha sido baixado não se perde). Um aviso no painel diz quantos voltaram. Os que você cancelou não voltam. A fila fica guardada no arquivo `.fila.json`, ao lado do programa.
 - **Arquivos temporários:** se o programa fechar no meio de uma compressão, os arquivos incompletos são apagados (na hora, ou na próxima vez que ele abrir). As compressões de vídeo não voltam sozinhas: envie o vídeo de novo.
 - **Tema claro ou escuro:** em **⚙ Configurações**, em **Tema**, escolha **Automático** (segue o modo claro/escuro do Windows, inclusive se ele mudar com o Puxaí aberto), **☀ Claro** ou **☾ Escuro**. Vale para o painel no navegador e para a janela do aplicativo (a barra de título também fica escura).
@@ -163,6 +164,25 @@ O programa passa a usar esse login automaticamente, em todos os sites (dá para 
 - **Projeto baixado como ZIP:** o programa baixa o ZIP novo do GitHub e substitui os arquivos do projeto. A pasta `downloads`, o ambiente do Python (`.ambiente`), os logs e o atalho não são tocados. Arquivos que saíram do projeto na versão nova são apagados.
 - **Projeto clonado com git:** o programa roda `git pull`, mas só se a pasta estiver na branch `main` e sem alterações locais no código. Assim, quem está desenvolvendo não tem o trabalho sobrescrito.
 - **Programa gerado (`Puxai.exe` ou o do Linux):** a versão nova é a da última **Release** (o aviso só aparece quando o arquivo para o seu sistema já está publicado). O botão baixa o `Puxai-windows.zip` (ou `Puxai-linux.tar.xz`), confere o SHA-256 que o GitHub publica para ele e extrai na pasta `.atualizacao`, ao lado do programa. Como um programa aberto não consegue trocar os próprios arquivos, um script pequeno (PowerShell no Windows, `sh` no Linux) espera o Puxaí fechar, põe os arquivos novos no lugar e abre o programa de novo. Se algo falhar no meio (ex.: um antivírus segurando um arquivo), ele volta os arquivos antigos e anota o motivo no `Puxai.log`. Configurações, histórico, cookies e logs não vêm no pacote, então continuam. Se a pasta do programa não aceitar arquivos novos (ex.: em *Arquivos de Programas*), o aviso explica como atualizar à mão.
+
+## Estatísticas anônimas
+
+Para saber quantas pessoas usam o Puxaí e quais sites mais falham (e o que consertar primeiro), o programa pode enviar estatísticas anônimas para o [Aptabase](https://aptabase.com), um serviço de estatísticas para aplicativos focado em privacidade: ele não guarda o IP nem identifica ninguém (cada abertura do programa vira um código aleatório). Grátis até 20 mil eventos por mês.
+
+**Hoje está desligado:** sem a chave, o painel nem pergunta e nada é enviado. Para ligar:
+
+1. Crie uma conta em [aptabase.com](https://aptabase.com) e um app chamado **Puxaí** (região **EU**).
+2. Copie a chave do app (começa com `A-EU-`) para `CHAVE_APP` em `servicos/estatisticas.py`.
+3. Publique uma versão nova. Na primeira vez que cada pessoa abrir o Puxaí, aparece o aviso **"Ajude a melhorar o Puxaí?"**, com **Sim, pode enviar** e **Não, obrigado**.
+
+**O que é enviado, e só se a pessoa aceitar:**
+
+| Quando | O quê |
+|---|---|
+| Ao abrir | versão do Puxaí, sistema e versão dele, idioma, se é o programa pronto ou pelo código, se abriu na janela ou no navegador |
+| Ao terminar um download | o site (ex.: YouTube), MP4 ou MP3 e a qualidade, se deu certo, deu erro (com a mensagem fixa do Puxaí, ex.: "Esse vídeo não está disponível") ou foi cancelado, se veio da extensão, se era um trecho e se voltou de quando o programa fechou |
+
+**Nunca:** links, títulos, nomes de arquivos, pastas, nome de usuário ou qualquer coisa que identifique a pessoa. Se o envio falhar (sem internet...), nada acontece: o programa segue normal. A resposta fica em `.preferencias.json` (`"estatisticas": true` ou `false`).
 
 ## Publicando uma versão nova
 
@@ -205,6 +225,7 @@ API-BAIXAR-YOUTUBE/
 │   ├── bandeja.py       # Ícone perto do relógio, com menu (feito direto com o Windows, sem biblioteca; só no Windows)
 │   ├── bandeja_linux.py # O mesmo ícone no Linux, com o Qt (que já vem junto para a janela)
 │   ├── relatorio.py     # Relatório de erro sem dados pessoais (e o e-mail de suporte, EMAIL_SUPORTE)
+│   ├── estatisticas.py  # Estatísticas anônimas, só com permissão (e a chave do Aptabase, CHAVE_APP)
 │   ├── area_de_transferencia.py # Link de vídeo copiado (o painel oferece "Colar")
 │   ├── caminhos.py      # Pastas do projeto e pasta Downloads do usuário
 │   ├── preferencias.py  # Preferências salvas (.preferencias.json): modo de abertura, pastas, atualização adiada
@@ -523,6 +544,8 @@ Baixa e instala a versão nova e reinicia o programa. Responde `{"versao": "<ver
 No programa gerado, enquanto o `POST /api/atualizar` baixa a versão nova: `{"etapa": "baixando" | "extraindo" | null, "baixado": <bytes>, "total": <bytes>}`. O painel usa para mostrar a porcentagem.
 
 ### `GET /api/preferencias` e `POST /api/preferencias`
+
+Também traz `estatisticas_disponivel` (há uma chave configurada para enviar estatísticas) e `estatisticas` (`true`, `false` ou `null` quando a pessoa ainda não respondeu); o `POST` aceita `{"estatisticas": true|false}`.
 
 Lê ou salva como o programa abre (`modo_abertura`: `janela` ou `navegador`, vale a partir da próxima vez que o programa abrir) e o tema (`tema`: `automatico`, `claro` ou `escuro`). Dá para enviar um ou os dois. A resposta traz também `tema_em_uso` (`claro` ou `escuro`: no automático, o do sistema).
 

@@ -11,7 +11,7 @@ import yt_dlp
 from yt_dlp.postprocessor import PostProcessor
 from yt_dlp.utils import DownloadCancelled, download_range_func
 
-from servicos import destinos, historico
+from servicos import destinos, estatisticas, historico
 from servicos.caminhos import PASTA_BASE, PASTA_DOWNLOADS
 from servicos.sites import mensagem_de_erro, opcoes_de_login, titulo_amigavel
 
@@ -171,9 +171,31 @@ def worker_fila():
             processar(tarefa)
             if status_download.get(tarefa["id_download"]) in STATUS_FINAIS:
                 _terminou(tarefa["id_download"])
+                _registrar_estatistica(tarefa)
         finally:
             # Sinaliza para a fila que essa tarefa acabou
             fila_downloads.task_done()
+
+
+def _registrar_estatistica(tarefa):
+    """Estatística anônima do download (só com permissão): o site e o resultado, nunca o link."""
+    if not estatisticas.permitido():
+        return
+    from servicos.area_de_transferencia import link_de_video
+    id_download = tarefa["id_download"]
+    status = status_download.get(id_download)
+    link = link_de_video(tarefa["url"])
+    estatisticas.registrar(
+        "download",
+        site=link["site"] if link else "outro",
+        formato=tarefa["formato"],
+        qualidade=f"{tarefa['qualidade']}p" if tarefa["formato"] == "mp4" else "",
+        resultado={"Pronto": "pronto", "Erro": "erro"}.get(status, "cancelado"),
+        erro=erros_download.get(id_download, "") if status == "Erro" else "",  # frase fixa do Puxaí
+        origem=tarefa.get("origem") or "painel",
+        trecho=bool(tarefa.get("trecho")),
+        retomado=id_download in retomados,
+    )
 
 
 def processar(tarefa):

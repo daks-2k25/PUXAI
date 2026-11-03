@@ -24,7 +24,8 @@ from servicos import atualizador
 atualizador.usar_versao_atualizada()  # Precisa vir antes de qualquer import do yt-dlp
 
 from rotas import criar_app
-from servicos import atalho, atualizacao_do_programa, bandeja_linux, downloader, preferencias, programa, sistema
+from servicos import (atalho, atualizacao_do_programa, bandeja_linux, downloader, estatisticas, preferencias, programa,
+                      sistema)
 from servicos.caminhos import EXECUTAVEL
 from servicos.janela import abrir_janela
 
@@ -89,10 +90,13 @@ if __name__ == "__main__":
     else:
         bandeja_linux.iniciar()  # com o Qt, na thread principal (só faz algo no Linux)
     atualizador.verificar_atualizacao()  # Só faz algo dentro do .exe, uma vez por dia
+    estatisticas.iniciar()  # só com a chave configurada e a permissão da pessoa
+    programa.ao_encerrar.append(lambda: estatisticas.enviar(espera=2))  # manda o que faltou, sem demorar
 
     # Janela do aplicativo ou navegador: escolhido em Configurações (⚙) no painel.
     # PUXAI_MODO força um modo uma vez (usado ao reabrir pelo painel).
     modo = os.environ.pop("PUXAI_MODO", "") or preferencias.modo_de_abertura()
+    estatisticas.registrar("abriu", instalacao="programa pronto" if EXECUTAVEL else "pelo código", modo=modo)
 
     if modo == "janela":
         try:
