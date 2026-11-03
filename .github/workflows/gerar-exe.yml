@@ -36,6 +36,9 @@ env:
   ARQUIVO_LINUX: Puxai-linux.tar.xz
   LINK_WINDOWS: https://github.com/daks-2k25/API-BAIXAR-YOUTUBE/releases/latest/download/Puxai-windows.zip
   LINK_LINUX: https://github.com/daks-2k25/API-BAIXAR-YOUTUBE/releases/latest/download/Puxai-linux.tar.xz
+  # A extensão do navegador (pasta extensao/), para quem usa o programa pronto
+  ARQUIVO_EXTENSAO: Puxai-extensao.zip
+  LINK_EXTENSAO: https://github.com/daks-2k25/API-BAIXAR-YOUTUBE/releases/latest/download/Puxai-extensao.zip
 
 permissions:
   contents: write  # criar a Release e a tag da versão
@@ -94,7 +97,14 @@ jobs:
             "3. Abra a pasta **Puxai** e dê dois cliques em **Puxai** (ou rode ``./Puxai/Puxai``). Não precisa instalar nada: o FFmpeg e o Deno já vêm junto.",
             "4. Na primeira vez, o Puxaí cria o atalho **Puxaí** no menu de aplicativos. Depois é só abrir por ele.",
             "",
-            "**Para atualizar:** o Puxaí avisa quando sai versão nova. Baixe de novo pelo mesmo link e extraia por cima da pasta antiga, substituindo os arquivos. Suas configurações e o histórico continuam."
+            "## Extensão do navegador (opcional)",
+            "",
+            "Com a extensão **Baixar com o Puxaí**, um clique no botão dela (ou no botão direito de um link) manda o vídeo para o Puxaí. Funciona no Chrome, Edge, Brave, Opera e Firefox, com o Puxaí aberto.",
+            "",
+            "1. **[Baixe a extensão]($env:LINK_EXTENSAO)** e extraia numa pasta que não vá apagar.",
+            "2. No Chrome/Edge/Brave/Opera: abra ``chrome://extensions``, ligue o **Modo do desenvolvedor** e clique em **Carregar sem compactação**, escolhendo essa pasta.",
+            "",
+            "**Para atualizar:** o Puxaí avisa quando sai versão nova; é só clicar em **Atualizar agora** que ele baixa, troca os arquivos e abre de novo sozinho. Suas configurações e o histórico continuam. Quem tem a versão 2.3.0 ou anterior precisa baixar esta versão pelo link uma última vez e extrair por cima da pasta antiga."
           )
           $notas -join "`n" | Set-Content notas.md -Encoding utf8
           exit 0
@@ -104,6 +114,15 @@ jobs:
           name: notas
           path: notas.md
           retention-days: 1
+
+      - name: Compactar a extensão do navegador
+        run: cd extensao && zip -qr "../$ARQUIVO_EXTENSAO" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARQUIVO_EXTENSAO }}
+          path: ${{ env.ARQUIVO_EXTENSAO }}
+          retention-days: 7
 
   windows:
     needs: versao
@@ -262,7 +281,7 @@ jobs:
       - name: Publicar a Release
         run: |
           versao="${{ needs.versao.outputs.versao }}"
-          set -- "arquivos/$ARQUIVO_WINDOWS"
+          set -- "arquivos/$ARQUIVO_WINDOWS" "arquivos/$ARQUIVO_EXTENSAO"
           if [ -f "arquivos/$ARQUIVO_LINUX" ]; then
             set -- "$@" "arquivos/$ARQUIVO_LINUX"
           else
@@ -280,3 +299,4 @@ jobs:
           echo "Links diretos (sempre a versão mais nova):"
           echo "  $LINK_WINDOWS"
           echo "  $LINK_LINUX"
+          echo "  $LINK_EXTENSAO"

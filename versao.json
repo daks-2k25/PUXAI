@@ -1,7 +1,12 @@
 {
-  "versao": "2.3.0",
+  "versao": "2.4.0",
   "novidades": [
-    "Versão para Linux: programa pronto para baixar (Ubuntu, Debian, Fedora, Mint...) ou pelo iniciar.sh",
-    "No Linux: janela própria, atalho no menu de aplicativos, tema escuro automático e aviso de link copiado"
+    "Atualização automática também no programa pronto (Windows e Linux): é só clicar em Atualizar agora",
+    "Mostra quanto já baixou da versão nova, e volta para a versão anterior se algo der errado",
+    "Fila que não se perde: se o programa fechar no meio, os downloads voltam sozinhos e continuam de onde pararam",
+    "Extensão do navegador Baixar com o Puxaí (Chrome, Edge, Brave, Opera e Firefox): manda o vídeo da página para o Puxaí com um clique",
+    "No Linux, o ícone do Puxaí perto do relógio, igual ao do Windows",
+    "Relatar problema com um clique: o relatório sai sem dados pessoais e você confere antes de enviar",
+    "Na versão 2.3.0, baixe esta versão pelo link uma última vez; daí em diante, atualiza sozinho"
   ]
 }

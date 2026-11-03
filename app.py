@@ -24,7 +24,8 @@ from servicos import atualizador
 atualizador.usar_versao_atualizada()  # Precisa vir antes de qualquer import do yt-dlp
 
 from rotas import criar_app
-from servicos import atalho, preferencias, programa, sistema
+from servicos import atalho, atualizacao_do_programa, bandeja_linux, downloader, preferencias, programa, sistema
+from servicos.caminhos import EXECUTAVEL
 from servicos.janela import abrir_janela
 
 app = criar_app()
@@ -47,7 +48,8 @@ def usar_navegador(servidor, abrir=True):
     if abrir:
         sistema.abrir_no_navegador(programa.ENDERECO_PAINEL)
     threading.Thread(target=programa.fechar_quando_ninguem_usar, daemon=True).start()
-    servidor.join()
+    # No Linux, mantém o ícone da bandeja respondendo; no Windows (ou sem o ícone), só espera
+    bandeja_linux.rodar_ate_encerrar(servidor)
 
 
 if __name__ == "__main__":
@@ -71,16 +73,21 @@ if __name__ == "__main__":
     print("==========================================")
 
     programa.limpar_sobras()  # temporários de uma vez anterior que fechou no meio de algo
+    downloader.retomar_fila()  # downloads que não terminaram da vez anterior
+    if EXECUTAVEL:
+        atualizacao_do_programa.limpar_sobras()  # atualização do programa que ficou pela metade
     atalho.criar()  # Linux: atalho "Puxaí" no menu de aplicativos (no Windows, quem cria é o iniciar.ps1)
 
     servidor = threading.Thread(target=iniciar_servidor, daemon=True)
     servidor.start()
     programa.esperar_servidor()
+    # Ícone perto do relógio (abrir, navegador, pasta, encerrar)
     if sys.platform == "win32":
-        # Ícone perto do relógio (abrir, navegador, pasta, encerrar). Feito com as
-        # funções do Windows: nem dá para importar em outro sistema.
+        # Feito com as funções do Windows: nem dá para importar em outro sistema
         from servicos import bandeja
         bandeja.iniciar()
+    else:
+        bandeja_linux.iniciar()  # com o Qt, na thread principal (só faz algo no Linux)
     atualizador.verificar_atualizacao()  # Só faz algo dentro do .exe, uma vez por dia
 
     # Janela do aplicativo ou navegador: escolhido em Configurações (⚙) no painel.

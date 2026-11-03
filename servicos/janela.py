@@ -94,13 +94,29 @@ def colocar_icone_na_janela(titulo, caminho_icone):
             user32.PostMessageW(encontrada[0], WM_SETICON, tipo, icone)
 
 
-def _testar_janela_do_linux():
-    """Confere, num processo à parte, se a janela (Qt) abre neste PC.
+_resultado_do_teste_do_qt = None
+
+
+def testar_qt_no_linux():
+    """Confere, num processo à parte, se o Qt (janela e ícone da bandeja) abre neste PC.
 
     Quando falta algo no sistema (ex.: a biblioteca libxcb-cursor0) ou não há
     tela (servidor, SSH), o Qt encerra o programa inteiro na hora, sem dar para
     tratar o erro. Testando antes, o programa só usa o navegador nesses casos.
+    O resultado fica guardado: o teste roda uma vez só.
     """
+    global _resultado_do_teste_do_qt
+    if _resultado_do_teste_do_qt is None:
+        try:
+            _rodar_teste_do_qt()
+            _resultado_do_teste_do_qt = ""
+        except RuntimeError as e:
+            _resultado_do_teste_do_qt = str(e)
+    if _resultado_do_teste_do_qt:
+        raise RuntimeError(_resultado_do_teste_do_qt)
+
+
+def _rodar_teste_do_qt():
     pasta, comando = programa.comando_do_programa()
     try:
         resultado = subprocess.run([*comando, "--testar-janela"], cwd=pasta,
@@ -115,7 +131,7 @@ def _testar_janela_do_linux():
 def abrir_janela():
     """Abre o painel numa janela própria. Bloqueia até a janela ser fechada."""
     if sys.platform.startswith("linux"):
-        _testar_janela_do_linux()
+        testar_qt_no_linux()
 
     import webview
 

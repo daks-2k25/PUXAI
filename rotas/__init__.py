@@ -6,6 +6,8 @@
 - arquivos.py     mostrar na pasta, abrir e "Meus downloads"
 - programa.py     janela ou navegador, preferências, encerrar
 - atualizacao.py  versão nova e botão "Atualizar agora"
+- extensao.py     a extensão do navegador ("Baixar com o Puxaí")
+- relatorio.py    relatório de erro ("Relatar problema")
 """
 import os
 
@@ -13,7 +15,7 @@ from flask import Flask, Response
 
 from servicos import preferencias
 from servicos.caminhos import PASTA_PAINEL
-from rotas import arquivos, atualizacao, comprimir_video, fotos, programa, videos
+from rotas import arquivos, atualizacao, comprimir_video, extensao, fotos, programa, relatorio, videos
 from rotas.seguranca import proteger
 
 
@@ -33,6 +35,6 @@ def criar_app():
         ), 1)
         return Response(html, mimetype="text/html")
 
-    for modulo in (videos, fotos, comprimir_video, arquivos, programa, atualizacao):
+    for modulo in (videos, fotos, comprimir_video, arquivos, programa, atualizacao, extensao, relatorio):
         app.register_blueprint(modulo.rotas)
     return app

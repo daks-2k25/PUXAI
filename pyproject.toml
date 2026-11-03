@@ -1,6 +1,6 @@
 [project]
 name = "puxai"
-version = "2.3.0"
+version = "2.4.0"
 description = "Baixa vídeos do YouTube em MP4/MP3 e converte fotos para JPG e WebP, com painel próprio (Windows e Linux)."
 readme = "README.md"
 requires-python = ">=3.10"

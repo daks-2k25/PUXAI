@@ -201,7 +201,7 @@ async function baixarPlaylist() {
     const lote = document.createDocumentFragment();
     for (const video of videos) {
         const pedido = {
-            url: video.url, formato: formatoEscolhido, qualidade: qualidadeEscolhida,
+            url: video.url, formato: formatoEscolhido, qualidade: qualidadeEscolhida, titulo: video.titulo,
             ...(pasta ? { pasta, numero: video.numero, total: dados.total } : {}),
         };
         const resposta = await fetch("/api/download", {
@@ -385,7 +385,7 @@ async function baixarVariosLinks() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // Vídeo dentro de playlist: baixa só o vídeo
-            body: JSON.stringify({ url: analise.linkLimpo || link, formato: formatoEscolhido, qualidade: qualidadeEscolhida }),
+            body: JSON.stringify({ url: analise.linkLimpo || link, formato: formatoEscolhido, qualidade: qualidadeEscolhida, titulo: nome }),
         }).catch(() => null);
         const resultado = resposta ? await resposta.json().catch(() => ({})) : {};
         const item = criarItem(resultado.id, descricao, nome, { inserir: false });
@@ -643,7 +643,7 @@ document.getElementById("form-download").addEventListener("submit", async (event
     const resposta = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: linkEnviado, formato: formatoEscolhido, qualidade: qualidadeEscolhida, ...trecho }),
+        body: JSON.stringify({ url: linkEnviado, formato: formatoEscolhido, qualidade: qualidadeEscolhida, titulo: tituloEnviado, ...trecho }),
     });
     const dados = await resposta.json();
 
@@ -781,6 +781,12 @@ function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
 
         if (dados.status === "Erro" || dados.status === "Desconhecido") {
             marcarErro(item, dados.erro);
+            const relatar = document.createElement("button");
+            relatar.type = "button";
+            relatar.className = "item-botao";
+            relatar.textContent = "⚠ Relatar problema";
+            relatar.addEventListener("click", () => abrirRelatorio(id));
+            acoes.append(" ", relatar);
             return true;
         }
         return false;
@@ -788,6 +794,128 @@ function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
     atualizarTopoDownloads();
     return item;
 }
+
+// Ao abrir (ou recarregar a página): mostra os downloads que ainda não terminaram.
+// Inclui os que voltaram para a fila porque o programa fechou no meio deles.
+// Depois, a cada 3 segundos: mostra os que chegaram pela extensão do navegador.
+function textoDoTempo(segundos) {
+    const s = Math.round(segundos);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = String(s % 60).padStart(2, "0");
+    return h ? `${h}:${String(m).padStart(2, "0")}:${r}` : `${m}:${r}`;
+}
+
+async function mostrarFilaAtual({ primeiraVez = false } = {}) {
+    const fila = await (await fetch("/api/fila")).json().catch(() => []);
+    for (const tarefa of fila) {
+        // Depois da primeira vez, só os da extensão: os do painel ele mesmo já pôs na lista
+        if (acompanhando.has(tarefa.id_download) || (!primeiraVez && tarefa.origem !== "extensao")) continue;
+        let descricao = tarefa.formato === "mp3" ? "MP3" : `MP4 ${tarefa.qualidade}p`;
+        if (tarefa.trecho) {
+            const [inicio, fim] = tarefa.trecho;
+            descricao += ` · trecho ${textoDoTempo(inicio)} a ${fim === null ? "fim" : textoDoTempo(fim)}`;
+        }
+        criarItem(tarefa.id_download, descricao, tarefa.titulo || tarefa.url.replace(/^https?:\/\/(www\.)?/, ""));
+    }
+    if (!primeiraVez) return;
+    const retomados = fila.filter((tarefa) => tarefa.retomado).length;
+    const aviso = document.getElementById("fila-retomada");
+    aviso.textContent = retomados === 1
+        ? "↻ 1 download que não terminou da última vez continuou de onde parou."
+        : `↻ ${retomados} downloads que não terminaram da última vez continuaram de onde pararam.`;
+    aviso.classList.toggle("escondido", !retomados);
+}
+mostrarFilaAtual({ primeiraVez: true }).catch(() => {});
+setInterval(() => mostrarFilaAtual().catch(() => {}), 3000);
+
+// ==========================================
+// RELATÓRIO DE ERRO ("Relatar problema"): monta, a pessoa confere e envia
+// ==========================================
+// O programa monta o texto sem dados pessoais; a pessoa pode apagar o que
+// quiser antes. Enviar abre o GitHub (novo Issue) ou o e-mail já preenchido.
+const fundoRelatorio = document.getElementById("relatorio");
+const descricaoRelatorio = document.getElementById("relatorio-descricao");
+const textoRelatorio = document.getElementById("relatorio-texto");
+const mensagemRelatorio = document.getElementById("relatorio-mensagem");
+const botaoEmailRelatorio = document.getElementById("relatorio-email");
+let relatorioAtual = null;
+
+async function abrirRelatorio(id = null) {
+    fundoRelatorio.classList.remove("escondido");
+    descricaoRelatorio.value = "";
+    textoRelatorio.value = "Montando o relatório...";
+    mensagemRelatorio.textContent = "";
+    const resposta = await fetch("/api/relatorio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+    }).catch(() => null);
+    relatorioAtual = resposta && resposta.ok ? await resposta.json() : null;
+    if (!relatorioAtual) {
+        textoRelatorio.value = "";
+        mensagemRelatorio.textContent = "Não foi possível montar o relatório. Tente de novo.";
+        return;
+    }
+    textoRelatorio.value = relatorioAtual.texto;
+    botaoEmailRelatorio.hidden = !relatorioAtual.email;
+    mensagemRelatorio.textContent = "Enviar pelo GitHub precisa de uma conta (grátis). Sem conta, use Copiar e mande o texto para quem te ajuda.";
+    descricaoRelatorio.focus();
+}
+
+function fecharRelatorio() {
+    fundoRelatorio.classList.add("escondido");
+}
+
+async function enviarRelatorio(destino) {
+    if (!relatorioAtual) return;
+    const resposta = await fetch("/api/relatorio/enviar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            destino, titulo: relatorioAtual.titulo, descricao: descricaoRelatorio.value, texto: textoRelatorio.value,
+        }),
+    }).catch(() => null);
+    if (!resposta || !resposta.ok) {
+        mensagemRelatorio.textContent = "Não foi possível abrir. Use Copiar e mande o texto para quem te ajuda.";
+        return;
+    }
+    mensagemRelatorio.textContent = destino === "github"
+        ? "✓ O GitHub abriu no navegador com o relatório preenchido: confira e clique em Create (ou Submit new issue)."
+        : "✓ O seu programa de e-mail abriu com o relatório preenchido: é só enviar.";
+}
+
+async function copiarRelatorio() {
+    const descricao = descricaoRelatorio.value.trim() || "(não descrito)";
+    const texto = `${relatorioAtual?.titulo || "Problema no Puxaí"}\n\n## O que aconteceu\n\n${descricao}\n\n${textoRelatorio.value}`;
+    try {
+        await navigator.clipboard.writeText(texto);
+    } catch {
+        // Na janela do aplicativo a área de transferência do navegador pode estar bloqueada
+        const temporario = document.createElement("textarea");
+        temporario.value = texto;
+        document.body.appendChild(temporario);
+        temporario.select();
+        document.execCommand("copy");
+        temporario.remove();
+    }
+    mensagemRelatorio.textContent = "✓ Copiado. Cole numa mensagem (WhatsApp, e-mail...) para quem te ajuda.";
+}
+
+document.getElementById("relatorio-github").addEventListener("click", () => enviarRelatorio("github"));
+botaoEmailRelatorio.addEventListener("click", () => enviarRelatorio("email"));
+document.getElementById("relatorio-copiar").addEventListener("click", copiarRelatorio);
+document.getElementById("relatorio-fechar").addEventListener("click", fecharRelatorio);
+fundoRelatorio.addEventListener("click", (evento) => {
+    if (evento.target === fundoRelatorio) fecharRelatorio(); // clicou fora da janela
+});
+document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && !fundoRelatorio.classList.contains("escondido")) fecharRelatorio();
+});
+document.getElementById("config-relatar").addEventListener("click", (evento) => {
+    evento.stopPropagation();
+    painelConfig.classList.add("escondido");
+    botaoConfig.classList.remove("aberto");
+    abrirRelatorio();
+});
 
 // ==========================================
 // FERRAMENTA 2: CONVERTER FOTO (HEIC -> JPG, HEIC/JPG/PNG -> WebP)
@@ -1773,7 +1901,21 @@ async function iniciarAtualizacao() {
     botaoAtualizar.textContent = "Atualizando...";
     mensagemAtualizacao.textContent = "Baixando a versão nova. Não feche o programa.";
 
+    // Programa gerado: o download tem dezenas de MB; mostra a porcentagem enquanto baixa
+    const acompanhar = setInterval(async () => {
+        const andamento = await (await fetch("/api/atualizar/andamento", { cache: "no-store" })).json().catch(() => null);
+        if (!andamento || !andamento.etapa) return;
+        if (andamento.etapa === "extraindo") {
+            mensagemAtualizacao.textContent = "Preparando a versão nova. Não feche o programa.";
+        } else if (andamento.total) {
+            const mb = (bytes) => Math.round(bytes / 1048576);
+            mensagemAtualizacao.textContent = `Baixando a versão nova: ${Math.floor((andamento.baixado / andamento.total) * 100)}% `
+                + `(${mb(andamento.baixado)} de ${mb(andamento.total)} MB). Não feche o programa.`;
+        }
+    }, 700);
+
     const resposta = await fetch("/api/atualizar", { method: "POST" }).catch(() => null);
+    clearInterval(acompanhar);
     const dados = resposta ? await resposta.json().catch(() => ({})) : {};
 
     if (!resposta || !resposta.ok) {

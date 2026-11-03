@@ -598,6 +598,87 @@ input[type="url"]:focus,
     color: var(--texto-suave);
 }
 
+/* ==========================================
+   Relatório de erro ("Relatar problema"): janela por cima do painel
+   ========================================== */
+.relatorio-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 12, 8, 0.5);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.relatorio-fundo.escondido {
+    display: none;
+}
+
+.relatorio {
+    display: grid;
+    gap: 8px;
+    width: min(580px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: 22px 24px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    background: var(--cartao);  /* sólido: o painel atrás não aparece no meio do texto */
+    box-shadow: var(--sombra-flutuante);
+    text-align: left;
+}
+
+.relatorio-titulo {
+    margin-bottom: 4px;
+    font-family: var(--serifa);
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.relatorio-rotulo {
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.relatorio-rotulo span,
+.relatorio-dica {
+    color: var(--texto-suave);
+    font-size: 13px;
+}
+
+.relatorio textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--borda-forte);
+    border-radius: 4px;
+    background: var(--campo);
+    color: var(--texto);
+    font: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.relatorio textarea.relatorio-texto {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.relatorio-botoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.relatorio-botoes [hidden] {
+    display: none;
+}
+
 /* Botão com cara de link ("+ Colar vários links de uma vez") */
 .botao-texto {
     margin-left: auto;

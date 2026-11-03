@@ -1,17 +1,19 @@
 """Atualiza o próprio programa pelo botão "Atualizar agora" do painel.
 
 A versão instalada fica em versao.json. O painel compara com o versao.json do
-GitHub e, se houver versão nova, oferece a atualização:
+GitHub (no programa gerado, com a última Release) e, se houver versão nova,
+oferece a atualização:
 
 - Pasta baixada como ZIP: baixa o ZIP novo do GitHub e substitui os arquivos
   do projeto (downloads, ambiente, logs e atalho não são tocados).
 - Pasta clonada com git: roda "git pull", mas só se estiver na branch principal
   e sem mudanças locais (para não atrapalhar quem está desenvolvendo).
-- Programa gerado (Puxai.exe): o código está empacotado dentro dele;
-  é preciso gerar o programa de novo.
+- Programa gerado (Puxai.exe ou o do Linux): baixa o arquivo da Release e
+  troca os arquivos do programa (veja atualizacao_do_programa.py).
 
-Depois de atualizar, o programa reinicia pelo iniciar.bat (iniciar.sh, no
-Linux), que também instala bibliotecas novas, se a versão nova precisar.
+Depois de atualizar pelo ZIP ou pelo git, o programa reinicia pelo iniciar.bat
+(iniciar.sh, no Linux), que também instala bibliotecas novas, se a versão nova
+precisar.
 """
 import io
 import json
@@ -24,13 +26,17 @@ import time
 import urllib.request
 import zipfile
 
-from servicos import preferencias
+from servicos import atualizacao_do_programa, preferencias
 from servicos.caminhos import EXECUTAVEL, PASTA_RECURSOS
 
 REPOSITORIO = "daks-2k25/API-BAIXAR-YOUTUBE"
 RAMO = "main"
 URL_VERSAO = f"https://raw.githubusercontent.com/{REPOSITORIO}/{RAMO}/versao.json"
 URL_ZIP = f"https://codeload.github.com/{REPOSITORIO}/zip/refs/heads/{RAMO}"
+# Programa gerado: a versão nova é a da última Release (que já tem o arquivo pronto).
+# PUXAI_URL_RELEASE troca o endereço, para testar a atualização sem publicar.
+URL_RELEASE = os.environ.get("PUXAI_URL_RELEASE") or f"https://api.github.com/repos/{REPOSITORIO}/releases/latest"
+URL_VERSAO_DA_TAG = "https://raw.githubusercontent.com/" + REPOSITORIO + "/{tag}/versao.json"
 
 PASTA_PROJETO = PASTA_RECURSOS
 ARQUIVO_VERSAO = os.path.join(PASTA_PROJETO, "versao.json")
@@ -41,14 +47,14 @@ ARQUIVO_MANIFESTO = os.path.join(PASTA_PROJETO, ".arquivos_do_programa.txt")
 PROTEGIDOS = (
     # "BaixarYouTube": pasta do programa gerado antes de o app se chamar Puxaí
     # ".ffmpeg": o FFmpeg que o iniciar.sh baixa no Linux
-    ".git", ".ambiente", ".venv", ".ffmpeg", "downloads", "Puxai", "BaixarYouTube", "atualizacoes",
+    ".git", ".ambiente", ".venv", ".ffmpeg", ".atualizacao", "downloads", "Puxai", "BaixarYouTube", "atualizacoes",
     "ferramentas/compilacao", ".atalho_criado", ".arquivos_do_programa.txt",
-    ".preferencias.json", ".historico.json", "cookies.txt",
+    ".preferencias.json", ".historico.json", ".fila.json", "cookies.txt",
 )
 
 
 # Guarda a última consulta ao GitHub por alguns minutos
-_cache = {"momento": 0, "dados": None}
+_cache = {"momento": 0, "dados": None, "release": None}
 CACHE_SEGUNDOS = 10 * 60
 
 
@@ -81,13 +87,18 @@ def _git(*argumentos):
     return resultado.returncode, (resultado.stdout + resultado.stderr).strip()
 
 
-def como_atualizar():
-    """Devolve ("zip" | "git", None) ou (None, motivo pelo qual não dá para atualizar aqui)."""
+def como_atualizar(release=None):
+    """Devolve ("zip" | "git" | "programa", None) ou (None, motivo pelo qual não dá para atualizar aqui)."""
     if EXECUTAVEL:
-        return None, (
-            f"Baixe a versão nova em github.com/{REPOSITORIO}/releases/latest "
-            "e descompacte por cima da pasta do programa (suas configurações continuam)."
-        )
+        manual = (f"Baixe a versão nova em github.com/{REPOSITORIO}/releases/latest "
+                  "e descompacte por cima da pasta do programa (suas configurações continuam).")
+        if not atualizacao_do_programa.sistema_suportado():
+            return None, manual
+        if release is not None and atualizacao_do_programa.arquivo_da_release(release) is None:
+            return None, "A versão nova ainda está sendo preparada para o seu sistema. Tente de novo daqui a pouco."
+        if not atualizacao_do_programa.pasta_permite_escrever():
+            return None, "A pasta do programa não aceita arquivos novos (ex.: está em Arquivos de Programas). " + manual
+        return "programa", None
 
     if os.path.isdir(os.path.join(PASTA_PROJETO, ".git")):
         if shutil.which("git") is None:
@@ -112,24 +123,38 @@ def verificar(forcar=False):
     atual = versao_instalada()
     dados = {"atual": atual, "nova": None, "novidades": [], "disponivel": False,
              "pode_atualizar": False, "motivo": None}
+    release = None
     try:
-        pedido = urllib.request.Request(URL_VERSAO, headers={"Cache-Control": "no-cache"})
-        with urllib.request.urlopen(pedido, timeout=8) as resposta:
-            remoto = json.load(resposta)
-        dados["nova"] = remoto.get("versao")
-        dados["novidades"] = remoto.get("novidades", [])
+        if EXECUTAVEL:
+            release = atualizacao_do_programa.ler_json(URL_RELEASE)
+            dados["nova"] = str(release["tag_name"]).lstrip("v")
+            dados["novidades"] = _novidades_da_versao(release["tag_name"])
+        else:
+            pedido = urllib.request.Request(URL_VERSAO, headers={"Cache-Control": "no-cache"})
+            with urllib.request.urlopen(pedido, timeout=8) as resposta:
+                remoto = json.load(resposta)
+            dados["nova"] = remoto.get("versao")
+            dados["novidades"] = remoto.get("novidades", [])
         dados["disponivel"] = _versao_como_tupla(dados["nova"]) > _versao_como_tupla(atual)
     except Exception as e:
         dados["motivo"] = f"Não foi possível verificar atualizações ({e})."
         return dados  # sem cache: tenta de novo na próxima vez
 
     if dados["disponivel"]:
-        forma, motivo = como_atualizar()
+        forma, motivo = como_atualizar(release)
         dados["pode_atualizar"] = forma is not None
         dados["motivo"] = motivo
 
-    _cache.update(momento=agora, dados=dados)
+    _cache.update(momento=agora, dados=dados, release=release)
     return dados
+
+
+def _novidades_da_versao(tag):
+    """As novidades do versao.json daquela versão (o mesmo texto do aviso de quem usa o código)."""
+    try:
+        return atualizacao_do_programa.ler_json(URL_VERSAO_DA_TAG.format(tag=tag)).get("novidades", [])
+    except Exception:
+        return []
 
 
 def _protegido(caminho_relativo):
@@ -197,22 +222,41 @@ def _atualizar_pelo_git():
 
 
 def aplicar():
-    """Baixa e instala a versão nova. Não reinicia (veja reiniciar())."""
-    forma, motivo = como_atualizar()
+    """Baixa e instala a versão nova. Não reinicia (veja reiniciar()). Devolve a versão nova."""
+    release = None
+    if EXECUTAVEL:
+        release = _cache["release"] or atualizacao_do_programa.ler_json(URL_RELEASE)
+    forma, motivo = como_atualizar(release)
     if forma is None:
         raise RuntimeError(motivo)
     print(f"[ATUALIZAÇÃO] Atualizando pelo {forma} (versão atual: {versao_instalada()})...")
-    if forma == "git":
-        _atualizar_pelo_git()
+    if forma == "programa":
+        # Só baixa e prepara: os arquivos são trocados depois que o programa fechar
+        atualizacao_do_programa.baixar_e_preparar(release)
+        nova = str(release["tag_name"]).lstrip("v")
     else:
-        _atualizar_pelo_zip()
-    _cache.update(momento=0, dados=None)
-    print(f"[ATUALIZAÇÃO] Atualizado para a versão {versao_instalada()}.")
+        if forma == "git":
+            _atualizar_pelo_git()
+        else:
+            _atualizar_pelo_zip()
+        nova = versao_instalada()
+    _cache.update(momento=0, dados=None, release=None)
+    print(f"[ATUALIZAÇÃO] Versão {nova} pronta.")
+    return nova
+
+
+def andamento():
+    """Quanto do arquivo do programa já foi baixado (para a porcentagem no painel)."""
+    return dict(atualizacao_do_programa.andamento)
 
 
 def reiniciar():
     """Abre o iniciar.bat (ou iniciar.sh) daqui a 2 segundos (tempo de este processo fechar).
-    Ele instala bibliotecas novas, se houver, e abre o programa de novo."""
+    Ele instala bibliotecas novas, se houver, e abre o programa de novo.
+    No programa gerado, abre o script que troca os arquivos e abre a versão nova."""
+    if EXECUTAVEL:
+        atualizacao_do_programa.trocar_e_reabrir()
+        return
     if sys.platform != "win32":
         # "sh iniciar.sh" e não "./iniciar.sh": a atualização pelo ZIP não guarda a permissão de executar
         subprocess.Popen(["sh", "-c", 'sleep 2; exec sh "$0"', os.path.join(PASTA_PROJETO, "iniciar.sh")],

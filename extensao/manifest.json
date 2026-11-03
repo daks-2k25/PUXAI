@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Baixar com o Puxaí",
+  "version": "1.0.0",
+  "description": "Manda o vídeo da página para o Puxaí baixar em MP4 ou MP3. O programa Puxaí precisa estar aberto no computador.",
+  "icons": {
+    "16": "icones/icone-16.png",
+    "32": "icones/icone-32.png",
+    "48": "icones/icone-48.png",
+    "128": "icones/icone-128.png"
+  },
+  "action": {
+    "default_title": "Baixar com o Puxaí",
+    "default_popup": "janela.html",
+    "default_icon": {
+      "16": "icones/icone-16.png",
+      "32": "icones/icone-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "fundo.js",
+    "scripts": ["fundo.js"]
+  },
+  "permissions": ["activeTab", "contextMenus", "notifications", "storage"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "commands": {
+    "baixar-mp4": {
+      "suggested_key": { "default": "Alt+Shift+P" },
+      "description": "Baixar o vídeo desta página em MP4"
+    },
+    "baixar-mp3": {
+      "suggested_key": { "default": "Alt+Shift+M" },
+      "description": "Baixar o áudio desta página em MP3"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "baixar-com-puxai@extensao",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
+}

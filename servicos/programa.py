@@ -12,7 +12,7 @@ import threading
 import time
 
 from servicos.caminhos import EXECUTAVEL, PASTA_DOWNLOADS, PASTA_RECURSOS
-from servicos.downloader import downloads_em_andamento
+from servicos.downloader import downloads_em_andamento, ids_guardados
 
 PORTA = int(os.environ.get("PORTA", 5000))
 ENDERECO_PAINEL = f"http://127.0.0.1:{PORTA}"
@@ -107,10 +107,14 @@ SOBRAS = ("*.part", "*.ytdl", "*_original.*", "*_comprimido.mp4", "*_passadas*",
 
 
 def limpar_sobras():
-    """Chamado ao abrir o programa, quando nada está em andamento."""
+    """Chamado ao abrir o programa, quando nada está em andamento.
+    Os pedaços dos downloads da fila guardada ficam: eles continuam de onde pararam."""
     apagadas = 0
+    guardados = ids_guardados()
     for padrao in SOBRAS:
         for arquivo in glob.glob(os.path.join(PASTA_DOWNLOADS, padrao)):
+            if os.path.basename(arquivo).split(".", 1)[0] in guardados:
+                continue
             try:
                 os.remove(arquivo)
                 apagadas += 1

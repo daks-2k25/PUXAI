@@ -7,8 +7,8 @@ from flask import Blueprint, jsonify, request, send_file
 
 from servicos import area_de_transferencia, compressor_video, preferencias
 from servicos.downloader import (
-    adicionar_fila, arquivos_salvos, cancelar_download, erros_download, extras_download, nome_de_arquivo_seguro,
-    status_download, titulos_download,
+    adicionar_fila, arquivos_salvos, cancelar_download, erros_download, extras_download, fila_atual,
+    nome_de_arquivo_seguro, status_download, titulos_download,
 )
 from rotas.utilidades import pasta_do_arquivo
 from servicos.informacoes import obter_informacoes, obter_playlist
@@ -98,7 +98,9 @@ def download_api():
     except (TypeError, ValueError):
         return jsonify({"erro": "Número do vídeo na playlist inválido."}), 400
 
-    adicionar_fila(url, formato, qualidade, id_download, trecho, pasta, numero)
+    # Título da prévia (opcional): o painel mostra se a fila voltar depois de fechar o programa
+    titulo = str(dados.get('titulo') or '')[:300] or None
+    adicionar_fila(url, formato, qualidade, id_download, trecho, pasta, numero, titulo)
 
     return jsonify({
         "mensagem": "Vídeo enfileirado com sucesso!",
@@ -175,6 +177,12 @@ def progresso(id_download):
         # Compressão de vídeo: tamanho antes/depois, resolução final, "ja_otimizada"
         "extra": extras_download.get(id_download),
     }
+
+
+@rotas.route('/api/fila', methods=['GET'])
+def fila_api():
+    # Downloads que ainda não terminaram (inclusive os que voltaram de quando o programa fechou)
+    return jsonify(fila_atual())
 
 
 @rotas.route('/api/progresso/<id_download>', methods=['GET'])

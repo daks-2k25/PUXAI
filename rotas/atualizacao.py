@@ -31,7 +31,7 @@ def atualizar_api():
     if downloads_em_andamento():
         return jsonify({"erro": "Espere os downloads terminarem (ou cancele) antes de atualizar."}), 409
     try:
-        autoatualizacao.aplicar()
+        versao = autoatualizacao.aplicar()
     except Exception as e:
         print(f"[ATUALIZAÇÃO] Falhou: {e}")
         return jsonify({"erro": f"Não foi possível atualizar: {e}"}), 500
@@ -39,4 +39,10 @@ def atualizar_api():
     # Responde ao painel e reinicia já na versão nova
     autoatualizacao.reiniciar()
     programa.encerrar_em_instantes()
-    return jsonify({"mensagem": "Atualizado! Reiniciando...", "versao": autoatualizacao.versao_instalada()})
+    return jsonify({"mensagem": "Atualizado! Reiniciando...", "versao": versao})
+
+
+@rotas.route('/api/atualizar/andamento', methods=['GET'])
+def andamento_da_atualizacao_api():
+    # Programa gerado: quanto da versão nova já foi baixado ({"etapa": "baixando"|"extraindo"|null, "baixado", "total"})
+    return jsonify(autoatualizacao.andamento())

@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import queue
 import re
@@ -11,7 +12,7 @@ from yt_dlp.postprocessor import PostProcessor
 from yt_dlp.utils import DownloadCancelled, download_range_func
 
 from servicos import destinos, historico
-from servicos.caminhos import PASTA_DOWNLOADS
+from servicos.caminhos import PASTA_BASE, PASTA_DOWNLOADS
 from servicos.sites import mensagem_de_erro, opcoes_de_login, titulo_amigavel
 
 # Quantos downloads rodam ao mesmo tempo (os outros esperam na fila)
@@ -30,7 +31,54 @@ arquivos_salvos = {}   # ID -> caminho do arquivo pronto na pasta Downloads
 cancelados = set()     # IDs que o usuário pediu para cancelar
 erros_download = {}    # ID -> mensagem explicando por que o download falhou
 extras_download = {}   # ID -> dados a mais para o painel (ex.: tamanho antes/depois de comprimir um vídeo)
+pedidos_download = {}  # ID -> link, formato e qualidade (para o relatório de erro, mesmo depois de terminar)
 fila_downloads = queue.Queue()
+
+# Fila guardada em arquivo: o que ainda não terminou (na fila ou baixando). Se o
+# programa fechar no meio, esses downloads voltam para a fila na próxima vez que
+# ele abrir, continuando de onde pararam (os pedaços já baixados ficam guardados).
+ARQUIVO_FILA = os.path.join(PASTA_BASE, ".fila.json")
+tarefas_pendentes = {}  # ID -> tarefa (na ordem em que entraram na fila)
+retomados = set()       # IDs que voltaram de uma vez anterior
+_trava_fila = threading.Lock()
+
+
+def _salvar_fila():
+    """Grava as tarefas pendentes (num arquivo temporário e depois troca: nunca fica pela metade)."""
+    with _trava_fila:
+        tarefas = [dict(t, trecho=_trecho_para_salvar(t["trecho"])) for t in tarefas_pendentes.values()]
+        temporario = ARQUIVO_FILA + ".tmp"
+        try:
+            with open(temporario, "w", encoding="utf-8") as f:
+                json.dump(tarefas, f, ensure_ascii=False, indent=1)
+            os.replace(temporario, ARQUIVO_FILA)
+        except OSError as e:
+            print(f"[FILA] Não foi possível guardar a fila: {e}")
+
+
+def _trecho_para_salvar(trecho):
+    # JSON não tem "infinito": fim None = até o final do vídeo
+    return None if not trecho else [trecho[0], None if trecho[1] == float("inf") else trecho[1]]
+
+
+def _ler_fila_salva():
+    try:
+        with open(ARQUIVO_FILA, encoding="utf-8") as f:
+            tarefas = json.load(f)
+        return [t for t in tarefas if isinstance(t, dict) and t.get("id_download") and t.get("url")]
+    except (OSError, ValueError):
+        return []
+
+
+def ids_guardados():
+    """IDs da fila guardada (os pedaços já baixados deles não são apagados ao abrir)."""
+    return {t["id_download"] for t in _ler_fila_salva()}
+
+
+def _terminou(id_download):
+    """Tira da fila guardada um download que acabou (pronto, erro ou cancelado)."""
+    if tarefas_pendentes.pop(id_download, None) is not None:
+        _salvar_fila()
 
 
 def nome_de_arquivo_seguro(texto):
@@ -121,6 +169,8 @@ def worker_fila():
         tarefa = fila_downloads.get()
         try:
             processar(tarefa)
+            if status_download.get(tarefa["id_download"]) in STATUS_FINAIS:
+                _terminou(tarefa["id_download"])
         finally:
             # Sinaliza para a fila que essa tarefa acabou
             fila_downloads.task_done()
@@ -293,14 +343,17 @@ for _ in range(DOWNLOADS_SIMULTANEOS):
     threading.Thread(target=worker_fila, daemon=True).start()
 
 
-def adicionar_fila(url, formato, qualidade, id_download, trecho=None, pasta=None, numero=None):
+def adicionar_fila(url, formato, qualidade, id_download, trecho=None, pasta=None, numero=None, titulo=None,
+                   origem="painel"):
     """Adiciona um novo pedido na fila e define o status inicial.
     trecho: (inicio, fim) em segundos, para baixar só um pedaço do vídeo.
     pasta e numero (playlists): subpasta dentro de Downloads e o número que vai
-    na frente do nome, já formatado (ex.: "03")."""
+    na frente do nome, já formatado (ex.: "03").
+    titulo: o da prévia, para o painel mostrar se a fila voltar depois de fechar.
+    origem: "painel" ou "extensao" (o painel acrescenta na lista sozinho os da extensão)."""
     cancelados.discard(id_download)
     status_download[id_download] = "Na fila..."
-    fila_downloads.put({
+    tarefa = {
         "url": url,
         "formato": formato,
         "qualidade": qualidade,
@@ -308,7 +361,40 @@ def adicionar_fila(url, formato, qualidade, id_download, trecho=None, pasta=None
         "id_download": id_download,
         "pasta": pasta,
         "numero": numero,
-    })
+        "titulo": titulo,
+        "origem": origem,
+    }
+    tarefas_pendentes[id_download] = tarefa
+    pedidos_download[id_download] = {"url": url, "formato": formato, "qualidade": qualidade, "trecho": bool(trecho)}
+    _salvar_fila()
+    fila_downloads.put(tarefa)
+
+
+def retomar_fila():
+    """Ao abrir: põe de volta na fila o que não terminou da vez anterior. Devolve quantos."""
+    tarefas = _ler_fila_salva()
+    for tarefa in tarefas:
+        trecho = tarefa.get("trecho")
+        if trecho:
+            trecho = (trecho[0], float("inf") if trecho[1] is None else trecho[1])
+        retomados.add(tarefa["id_download"])
+        adicionar_fila(tarefa["url"], tarefa.get("formato", "mp4"), tarefa.get("qualidade"), tarefa["id_download"],
+                       trecho, tarefa.get("pasta"), tarefa.get("numero"), tarefa.get("titulo"),
+                       tarefa.get("origem", "painel"))
+    if tarefas:
+        print(f"[FILA] {len(tarefas)} download(s) da vez anterior de volta na fila.")
+    return len(tarefas)
+
+
+def fila_atual():
+    """Os downloads que ainda não terminaram, na ordem da fila (para o painel montar a lista)."""
+    return [
+        {**{k: t[k] for k in ("id_download", "url", "formato", "qualidade", "titulo", "origem")},
+         "trecho": _trecho_para_salvar(t["trecho"]), "status": status_download.get(t["id_download"]),
+         "retomado": t["id_download"] in retomados}
+        for t in list(tarefas_pendentes.values())
+        if status_download.get(t["id_download"]) not in STATUS_FINAIS
+    ]
 
 
 def quantos_em_andamento():
@@ -330,5 +416,7 @@ def cancelar_download(id_download):
     cancelados.add(id_download)
     if status == "Na fila...":
         status_download[id_download] = "Cancelado"
+    # Sai da fila guardada na hora: se o programa fechar antes, ele não volta
+    _terminou(id_download)
     return True
 

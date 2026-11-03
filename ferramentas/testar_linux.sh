@@ -56,10 +56,31 @@ conferir "sem FFmpeg instalado no PATH" "" sh -c '! command -v ffmpeg'
 # Janela própria (Qt) numa tela virtual: prova que o Qt e o WebEngine vieram junto
 if command -v xvfb-run >/dev/null 2>&1; then
     conferir "janela (Qt) abre" "" timeout 60 xvfb-run -a "$COPIA/Puxai" --testar-janela
+
+    # Modo navegador com tela: o Qt fica rodando por causa do ícone da bandeja. A tela
+    # virtual não tem área de ícones: o programa tem que perceber e seguir sem ele.
+    PORTA=$PORTA PUXAI_MODO=navegador BROWSER=true timeout 120 xvfb-run -a "$COPIA/Puxai" > "$COPIA/registro-tela.txt" 2>&1 &
+    pid=$!
+    respondeu=""
+    for _ in $(seq 90); do
+        sleep 1
+        if curl -sf "$ENDERECO/api/modo" -o /dev/null; then respondeu=1; break; fi
+    done
+    conferir "com tela: programa abre e responde (ícone da bandeja)" "" test -n "$respondeu"
+    conferir "com tela: ícone da bandeja testado" "" grep -q "\[BANDEJA\]" "$COPIA/registro-tela.txt"
+    curl -sf -X POST "$ENDERECO/api/encerrar" -o /dev/null
+    fechou=""
+    for _ in $(seq 15); do
+        if ! kill -0 "$pid" 2>/dev/null; then fechou=1; break; fi
+        sleep 1
+    done
+    conferir "com tela: programa fecha" "" test -n "$fechou"
+    [ -n "$fechou" ] && pid=""
+    cat "$COPIA/registro-tela.txt" >> "$COPIA/registro.txt"
 fi
 
 # Modo navegador, sem abrir navegador de verdade (o "navegador" é o comando true, que não faz nada)
-PORTA=$PORTA PUXAI_MODO=navegador BROWSER=true "$COPIA/Puxai" > "$COPIA/registro.txt" 2>&1 &
+PORTA=$PORTA PUXAI_MODO=navegador BROWSER=true "$COPIA/Puxai" >> "$COPIA/registro.txt" 2>&1 &
 pid=$!
 
 respondeu=""
@@ -97,4 +118,44 @@ for _ in $(seq 15); do
 done
 conferir "programa fechou" "" test -n "$fechou"
 [ -n "$fechou" ] && pid=""
+
+# Atualização automática: uma "Release" falsa (versão 9.9.9, com o mesmo programa)
+# servida aqui. O programa baixa, fecha, troca os arquivos e abre já na versão nova.
+echo "Testando a atualização automática..."
+RELEASE="$(dirname "$COPIA")/release"
+mkdir -p "$RELEASE/pacote"
+cp -a "$PASTA" "$RELEASE/pacote/Puxai"
+sed -i 's/"versao": *"[^"]*"/"versao": "9.9.9"/' "$RELEASE/pacote/Puxai/_internal/versao.json"
+echo "veio na 9.9.9" > "$RELEASE/pacote/Puxai/novidade.txt"
+XZ_OPT="-0 -T0" tar -cJf "$RELEASE/Puxai-linux.tar.xz" -C "$RELEASE/pacote" Puxai
+printf '{"tag_name": "v9.9.9", "assets": [{"name": "Puxai-linux.tar.xz", "size": %s, "digest": "sha256:%s", "browser_download_url": "http://127.0.0.1:8766/Puxai-linux.tar.xz"}]}' \
+    "$(stat -c %s "$RELEASE/Puxai-linux.tar.xz")" "$(sha256sum "$RELEASE/Puxai-linux.tar.xz" | cut -d' ' -f1)" > "$RELEASE/release.json"
+python3 -m http.server 8766 --bind 127.0.0.1 --directory "$RELEASE" >/dev/null 2>&1 &
+servidor=$!
+echo '{"modo_abertura": "navegador"}' > "$COPIA/.preferencias.json"
+
+PORTA=$PORTA PUXAI_MODO=navegador BROWSER=true PUXAI_URL_RELEASE=http://127.0.0.1:8766/release.json \
+    "$COPIA/Puxai" >> "$COPIA/registro.txt" 2>&1 &
+pid=$!
+esperar_api() { for _ in $(seq 90); do sleep 1; curl -sf "$ENDERECO/api/modo" -o /dev/null && return 0; done; return 1; }
+conferir "programa abriu (antes de atualizar)" "" esperar_api
+conferir "versão nova encontrada" "" sh -c "curl -sf '$ENDERECO/api/versao?forcar=1' | grep -Eq '\"pode_atualizar\": *true'"
+conferir "atualizar respondeu" "" sh -c "curl -sf -X POST '$ENDERECO/api/atualizar' | grep -q '9.9.9'"
+fechou=""
+for _ in $(seq 20); do
+    if ! kill -0 "$pid" 2>/dev/null; then fechou=1; break; fi
+    sleep 1
+done
+conferir "versão antiga fechou" "" test -n "$fechou"
+[ -n "$fechou" ] && pid=""
+conferir "abriu de novo sozinho" "" esperar_api
+conferir "já na versão nova" "" sh -c "curl -sf '$ENDERECO/api/versao' | grep -Eq '\"atual\": *\"9.9.9\"'"
+conferir "arquivo novo do pacote chegou" "" test -f "$COPIA/novidade.txt"
+conferir "configurações continuaram" "" grep -q navegador "$COPIA/.preferencias.json"
+sleep 4
+conferir "pasta temporária apagada" "" test ! -e "$COPIA/.atualizacao"
+curl -sf -X POST "$ENDERECO/api/encerrar" -o /dev/null
+sleep 2
+kill "$servidor" 2>/dev/null
+pkill -f "$COPIA/Puxai" 2>/dev/null
 terminar

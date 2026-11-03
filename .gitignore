@@ -18,3 +18,5 @@ uv.lock
 .historico.json
 cookies.txt
 .ffmpeg/
+.atualizacao/
+.fila.json

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Baixar com o Puxaí</title>
+  <link rel="stylesheet" href="janela.css" />
+</head>
+<body>
+  <header>
+    <img src="icones/icone-32.png" alt="" width="24" height="24" />
+    <span>Baixar com o Puxaí</span>
+  </header>
+
+  <!-- Preenchido pelo janela.js: "verificando", "fechado", "sem-video" ou "pronto" -->
+  <main id="conteudo">
+    <p id="mensagem" class="mensagem">Procurando o Puxaí...</p>
+
+    <div id="baixar" hidden>
+      <p id="titulo" class="titulo"></p>
+      <div class="linha">
+        <button type="button" id="mp4" class="botao principal">⬇ Baixar MP4</button>
+        <select id="qualidade" aria-label="Qualidade do vídeo"></select>
+      </div>
+      <button type="button" id="mp3" class="botao">♪ Baixar MP3 (só o áudio)</button>
+    </div>
+
+    <p id="resultado" class="mensagem" hidden></p>
+    <button type="button" id="abrir" class="botao-texto" hidden>Abrir o Puxaí</button>
+  </main>
+
+  <footer>
+    <span>Botão direito num link: <b>Baixar com o Puxaí</b></span>
+    <details>
+      <summary>Porta</summary>
+      <label>Porta do Puxaí <input id="porta" type="number" min="1" max="65535" placeholder="5000" /></label>
+    </details>
+  </footer>
+
+  <script src="janela.js"></script>
+</body>
+</html>

@@ -15,7 +15,7 @@ Esse link baixa sempre a **versão mais nova**. Não precisa ter conta no GitHub
 
 **Dica:** clique com o botão direito no **Puxai.exe** → **Enviar para → Área de trabalho (criar atalho)**, para abrir pela Área de Trabalho.
 
-**Para atualizar:** o Puxaí avisa quando sai uma versão nova. Baixe de novo pelo mesmo link e extraia **por cima** da pasta antiga, substituindo os arquivos. Suas configurações e o histórico continuam.
+**Para atualizar:** o Puxaí avisa quando sai uma versão nova. Clique em **Atualizar agora**: ele baixa a versão nova, fecha, troca os arquivos e abre de novo sozinho. Suas configurações e o histórico continuam. (Quem tem a versão 2.3.0 ou anterior precisa baixar a versão nova pelo link uma última vez e extrair **por cima** da pasta antiga; daí em diante, atualiza sozinho.)
 
 ## ⬇ Baixar o Puxaí (Linux)
 
@@ -28,7 +28,7 @@ Para PCs de 64 bits (x86_64) com Ubuntu 22.04, Debian 12, Fedora 37, Linux Mint 
 3. Abra a pasta **Puxai** e dê dois cliques em **Puxai** (ou rode `./Puxai/Puxai`). Não precisa instalar nada: o FFmpeg e o Deno vêm junto.
 4. Na primeira vez, o Puxaí cria o atalho **Puxaí** no **menu de aplicativos**. Depois é só abrir por ele.
 
-**Para atualizar:** como no Windows, baixe de novo pelo mesmo link e extraia **por cima** da pasta antiga.
+**Para atualizar:** como no Windows, pelo botão **Atualizar agora** (na versão 2.3.0, baixe de novo pelo link e extraia **por cima** da pasta antiga).
 
 As novidades de cada versão ficam na página [**Releases**](https://github.com/daks-2k25/API-BAIXAR-YOUTUBE/releases).
 
@@ -63,7 +63,26 @@ No Linux, o programa funciona igual ao do Windows, com estas diferenças:
 - **Escolher pasta:** usa a janela do sistema (zenity no GNOME, kdialog no KDE).
 - **Abrir** e **Mostrar na pasta** usam o programa padrão do sistema e o gerenciador de arquivos (Arquivos, Dolphin, Nemo, Thunar...).
 - **Tema automático:** segue o modo escuro do GNOME ou do KDE.
-- **Sem ícone perto do relógio:** no modo navegador, feche pelo botão **Encerrar** do painel (ou ele fecha sozinho 3 minutos depois que nenhuma aba estiver aberta).
+- **Ícone perto do relógio:** igual ao do Windows (abrir, abrir no navegador, abrir a pasta e encerrar). Aparece no KDE, XFCE, Cinnamon, MATE, Budgie e no Ubuntu. No GNOME puro (ex.: Fedora, Debian), a área de ícones só existe com a extensão **AppIndicator** (pacote `gnome-shell-extension-appindicator`); sem ela, o Puxaí segue sem o ícone. Nesse caso, no modo navegador, feche pelo botão **Encerrar** do painel (ou ele fecha sozinho 3 minutos depois que nenhuma aba estiver aberta).
+
+## Extensão do navegador: "Baixar com o Puxaí"
+
+Com a extensão, não precisa copiar e colar o link: num vídeo aberto no navegador, um clique manda ele para a fila do Puxaí. Funciona no **Chrome, Edge, Brave, Opera** e **Firefox**. O Puxaí precisa estar aberto (a extensão avisa se não estiver).
+
+- **Botão da extensão** (na barra do navegador): mostra o vídeo da aba, com **Baixar MP4** (e a qualidade) e **Baixar MP3**.
+- **Botão direito** num link, num vídeo ou na página: **Baixar vídeo com o Puxaí (MP4)** ou **Baixar MP3 com o Puxaí**.
+- **Atalhos:** **Alt+Shift+P** (MP4) e **Alt+Shift+M** (MP3) baixam o vídeo da aba aberta. Dá para trocar em `chrome://extensions/shortcuts`.
+- Uma notificação confirma que entrou na fila, e o download aparece sozinho na lista do Puxaí. O arquivo vai para a pasta escolhida no Puxaí.
+
+**Instalar no Chrome, Edge, Brave ou Opera:**
+
+1. Baixe o **[Puxai-extensao.zip](https://github.com/daks-2k25/API-BAIXAR-YOUTUBE/releases/latest/download/Puxai-extensao.zip)** e extraia numa pasta que você não vá apagar (ou use a pasta `extensao/` do projeto).
+2. Abra `chrome://extensions` (no Edge, `edge://extensions`), ligue o **Modo do desenvolvedor** e clique em **Carregar sem compactação**. Escolha a pasta.
+3. Clique no ícone de quebra-cabeça da barra e fixe o **Baixar com o Puxaí**.
+
+**No Firefox:** abra `about:debugging#/runtime/this-firefox`, clique em **Carregar extensão temporária** e escolha o `manifest.json` da pasta. Nesse modo, o Firefox tira a extensão quando fecha. Para ficar instalada de vez, ela precisa ser publicada na loja do Firefox (grátis).
+
+**Segurança:** a extensão só consegue usar as rotas `/api/extensao/...` do Puxaí (pôr um link na fila, ver se o programa está aberto e trazê-lo para a frente). O resto da API (encerrar, atualizar, pastas, preferências...) continua só para o painel. Um site comum não consegue se passar pela extensão. A extensão não coleta nem envia dados para lugar nenhum: só fala com o Puxaí, no seu computador.
 
 ## Funcionalidades
 
@@ -75,6 +94,9 @@ No Linux, o programa funciona igual ao do Windows, com estas diferenças:
 - Download de vídeo em **MP4** com **escolha de resolução** (360p, 480p, 720p ou 1080p), inclusive em vídeos verticais (TikTok, Reels, Shorts). No TikTok, sempre a versão **sem marca d'água**
 - Extração de áudio em **MP3** (192 kbps) com **capa e informações**: a miniatura do vídeo vira a capa (quadrada, como a de um álbum), e o MP3 leva título, artista, álbum (quando o YouTube informa) e ano, para aparecer certinho no player e no celular. O título sai sem o artista na frente e sem "(Official Video)", "[Lyrics]" e parecidos; no comentário vai o link do vídeo
 - **Até 3 downloads ao mesmo tempo**, com acompanhamento de progresso
+- **Extensão do navegador** ("Baixar com o Puxaí"): manda o vídeo da página para o Puxaí com um clique, pelo botão da extensão, pelo botão direito ou por atalho de teclado
+- **Relatório de erro com um clique**: num download que deu erro (ou em Configurações), **⚠ Relatar problema** monta um relatório sem dados pessoais, que a pessoa confere e envia pelo GitHub, por e-mail ou copia
+- **Fila que não se perde**: se o programa (ou o PC) fechar no meio, os downloads que não terminaram voltam para a fila na próxima vez que ele abrir, e continuam de onde pararam
 - **Nova tentativa automática** quando o YouTube falha momentaneamente
 - **Playlists e canais**: cole o link e aparece a lista de vídeos (até 200) com caixinhas para marcar quais baixar. Os arquivos podem ir para uma pasta com o nome da playlist, numerados na ordem (`01 - Título`), bom para álbuns. Se o link for de um vídeo aberto dentro de uma playlist, o painel pergunta: **Usar só este vídeo** ou **Baixar a playlist**
 - **Vários links de uma vez**: cole uma lista de links (até 200) e todos entram na fila, na ordem
@@ -103,8 +125,10 @@ No Linux, o programa funciona igual ao do Windows, com estas diferenças:
 - **Depois:** se preferir atualizar mais tarde, clique em **Depois**. A notificação não volta para essa versão (o sino continua com a bolinha, e a atualização fica disponível nele). Se sair uma versão ainda mais nova, o programa avisa de novo.
 - **Sino 🔔:** mostra a atualização disponível ou confirma que você está na versão mais recente, com o botão **Verificar agora**.
 - **Para fechar:** feche a janela. Se ainda houver download em andamento, o programa pergunta antes.
-- **Ícone perto do relógio (bandeja do Windows):** enquanto o Puxaí está aberto, o ícone dele fica ali. **Clique** para abrir (traz a janela para a frente, ou abre o painel no navegador); com o **botão direito**, o menu tem **Abrir o Puxaí**, **Abrir no navegador**, **Abrir a pasta dos arquivos** e **Encerrar o Puxaí** (que pergunta antes se ainda há downloads ou compressões em andamento). Parando o mouse em cima, aparece quantos itens estão em andamento. No modo navegador, é o jeito mais fácil de fechar o programa. Se o ícone estiver escondido, ele fica na setinha **^** ao lado do relógio.
-- **Arquivos temporários:** se o programa fechar no meio de um download ou de uma compressão, os arquivos incompletos são apagados (na hora, ou na próxima vez que ele abrir).
+- **Ícone perto do relógio (bandeja do Windows e do Linux):** enquanto o Puxaí está aberto, o ícone dele fica ali. **Clique** para abrir (traz a janela para a frente, ou abre o painel no navegador); com o **botão direito**, o menu tem **Abrir o Puxaí**, **Abrir no navegador**, **Abrir a pasta dos arquivos** e **Encerrar o Puxaí** (que pergunta antes se ainda há downloads ou compressões em andamento). Parando o mouse em cima, aparece quantos itens estão em andamento. No modo navegador, é o jeito mais fácil de fechar o programa. Se o ícone estiver escondido, ele fica na setinha **^** ao lado do relógio.
+- **Relatar um problema:** num download que deu erro, clique em **⚠ Relatar problema** (para outros problemas: **⚙ Configurações → Algo deu errado? Relatar um problema**). Abre uma janela com o relatório pronto: versões do Puxaí, do yt-dlp e do FFmpeg, o sistema, o site e o erro do download, e as últimas linhas de erro do `Puxai.log`. Ele sai **sem dados pessoais**: o nome de usuário e as pastas viram `~`, os links ficam só com o site (ex.: `youtube.com`) e e-mails e o código dos vídeos são tirados. Dá para escrever o que aconteceu e apagar o que quiser do texto antes de enviar. **Enviar pelo GitHub** abre a página de novo *Issue* já preenchida (precisa de conta, grátis); **Enviar por e-mail** abre o programa de e-mail (aparece quando o e-mail de suporte estiver configurado em `servicos/relatorio.py`, `EMAIL_SUPORTE`); **Copiar** põe o texto na área de transferência, para mandar por WhatsApp, por exemplo.
+- **Fechou no meio de um download?** Na próxima vez que o Puxaí abrir, os downloads que estavam na fila ou baixando voltam sozinhos, e continuam de onde pararam (o que já tinha sido baixado não se perde). Um aviso no painel diz quantos voltaram. Os que você cancelou não voltam. A fila fica guardada no arquivo `.fila.json`, ao lado do programa.
+- **Arquivos temporários:** se o programa fechar no meio de uma compressão, os arquivos incompletos são apagados (na hora, ou na próxima vez que ele abrir). As compressões de vídeo não voltam sozinhas: envie o vídeo de novo.
 - **Tema claro ou escuro:** em **⚙ Configurações**, em **Tema**, escolha **Automático** (segue o modo claro/escuro do Windows, inclusive se ele mudar com o Puxaí aberto), **☀ Claro** ou **☾ Escuro**. Vale para o painel no navegador e para a janela do aplicativo (a barra de título também fica escura).
 - **Onde salvar:** em **⚙ Configurações**, em **Salvar os arquivos em**, escolha **Uma pasta para tudo** ou **Pastas separadas** (Vídeos, Músicas e Fotos). Clique em **Escolher…** para abrir a janela do Windows e escolher a pasta; **Usar Downloads** volta para a pasta Downloads. Se a pasta escolhida não estiver disponível (ex.: HD externo desconectado), o arquivo vai para Downloads.
 - **Janela ou navegador:** em **⚙ Configurações** (ao lado do sino), escolha se o programa abre na **Janela do aplicativo** ou no **Navegador**. A escolha fica salva para as próximas vezes. Para trocar na hora:
@@ -138,7 +162,7 @@ O programa passa a usar esse login automaticamente, em todos os sites (dá para 
 
 - **Projeto baixado como ZIP:** o programa baixa o ZIP novo do GitHub e substitui os arquivos do projeto. A pasta `downloads`, o ambiente do Python (`.ambiente`), os logs e o atalho não são tocados. Arquivos que saíram do projeto na versão nova são apagados.
 - **Projeto clonado com git:** o programa roda `git pull`, mas só se a pasta estiver na branch `main` e sem alterações locais no código. Assim, quem está desenvolvendo não tem o trabalho sobrescrito.
-- **Programa gerado (`Puxai.exe` ou o do Linux):** o aviso aparece com o link da página **Releases**, onde está o `.zip` (ou `.tar.xz`) da versão nova; é só descompactar por cima da pasta do programa.
+- **Programa gerado (`Puxai.exe` ou o do Linux):** a versão nova é a da última **Release** (o aviso só aparece quando o arquivo para o seu sistema já está publicado). O botão baixa o `Puxai-windows.zip` (ou `Puxai-linux.tar.xz`), confere o SHA-256 que o GitHub publica para ele e extrai na pasta `.atualizacao`, ao lado do programa. Como um programa aberto não consegue trocar os próprios arquivos, um script pequeno (PowerShell no Windows, `sh` no Linux) espera o Puxaí fechar, põe os arquivos novos no lugar e abre o programa de novo. Se algo falhar no meio (ex.: um antivírus segurando um arquivo), ele volta os arquivos antigos e anota o motivo no `Puxai.log`. Configurações, histórico, cookies e logs não vêm no pacote, então continuam. Se a pasta do programa não aceitar arquivos novos (ex.: em *Arquivos de Programas*), o aviso explica como atualizar à mão.
 
 ## Publicando uma versão nova
 
@@ -156,6 +180,10 @@ API-BAIXAR-YOUTUBE/
 ├── app.py               # Início do programa: liga o servidor e abre a janela ou o navegador
 ├── versao.json          # Versão do programa e novidades (usado na atualização)
 ├── pyproject.toml       # Bibliotecas do Python (usado pelo uv)
+├── extensao/            # Extensão do navegador "Baixar com o Puxaí" (Chrome, Edge, Firefox...)
+│   ├── manifest.json    # Nome, permissões, atalhos de teclado
+│   ├── fundo.js         # Fala com o Puxaí; menu do botão direito e atalhos
+│   └── janela.html/.css/.js # Janelinha do botão da barra
 ├── painel/              # Painel (index.html, style.css, script.js)
 │                        # + logo.webp, favicon.svg, icone.ico e icone.png (ícone do programa)
 ├── rotas/               # Endereços da API (/api/...), um arquivo por área
@@ -166,6 +194,8 @@ API-BAIXAR-YOUTUBE/
 │   ├── arquivos.py      # Mostrar na pasta, abrir e "Meus downloads"
 │   ├── programa.py      # Janela ou navegador, preferências, encerrar
 │   ├── atualizacao.py   # Versão nova e "Atualizar agora"
+│   ├── extensao.py      # As rotas que a extensão do navegador pode usar
+│   ├── relatorio.py     # "Relatar problema": montar o relatório e abrir o GitHub ou o e-mail
 │   └── utilidades.py    # O que as rotas compartilham (arquivos enviados, salvar em Downloads)
 ├── servicos/            # O que o programa faz (as rotas só chamam estes arquivos)
 │   ├── programa.py      # Porta, uma instância só, reiniciar, encerrar e estado da janela
@@ -173,6 +203,8 @@ API-BAIXAR-YOUTUBE/
 │   ├── sistema.py       # O que muda entre Windows e Linux: abrir arquivo, mostrar na pasta
 │   ├── atalho.py        # Linux: atalho "Puxaí" no menu de aplicativos
 │   ├── bandeja.py       # Ícone perto do relógio, com menu (feito direto com o Windows, sem biblioteca; só no Windows)
+│   ├── bandeja_linux.py # O mesmo ícone no Linux, com o Qt (que já vem junto para a janela)
+│   ├── relatorio.py     # Relatório de erro sem dados pessoais (e o e-mail de suporte, EMAIL_SUPORTE)
 │   ├── area_de_transferencia.py # Link de vídeo copiado (o painel oferece "Colar")
 │   ├── caminhos.py      # Pastas do projeto e pasta Downloads do usuário
 │   ├── preferencias.py  # Preferências salvas (.preferencias.json): modo de abertura, pastas, atualização adiada
@@ -181,6 +213,7 @@ API-BAIXAR-YOUTUBE/
 │   ├── compressor.py    # Aba "Comprimir foto": menor arquivo sem perda visível (FFmpeg + SSIM)
 │   ├── compressor_video.py # Aba "Comprimir vídeo": caber num tamanho (2 passadas) ou por qualidade
 │   ├── autoatualizacao.py # Botão "Atualizar agora": baixa e instala a versão nova
+│   ├── atualizacao_do_programa.py # O mesmo no programa gerado: baixa a Release e troca os arquivos
 │   ├── atualizador.py   # Mantém o yt-dlp atualizado dentro do executável
 │   ├── downloader.py    # Fila de downloads, corte de trecho e cancelamento (yt-dlp)
 │   ├── informacoes.py   # Prévia do vídeo (título, canal, duração, miniatura)
@@ -341,6 +374,18 @@ Lista as resoluções aceitas.
 { "qualidades": ["360p", "480p", "720p", "1080p"], "padrao": "720p" }
 ```
 
+### `GET /api/extensao/estado`, `POST /api/extensao/enviar` e `POST /api/extensao/abrir`
+
+As únicas rotas que a extensão do navegador pode usar (pedidos com `Origin: chrome-extension://...` ou `moz-extension://...`; em qualquer outra rota, eles recebem `403`). `estado` responde `{"puxai": true, "versao", "qualidades", "padrao"}`. `enviar` recebe `{"url", "formato": "mp4"|"mp3", "qualidade": "720p", "titulo"}`, confere se o yt-dlp sabe baixar daquele link e põe na fila: `202` com `{"id", "site", "formato", "qualidade"}`, ou `400` com o motivo (página que não é de vídeo, link de playlist). `abrir` traz a janela do Puxaí para a frente (ou abre o painel).
+
+### `POST /api/relatorio` e `POST /api/relatorio/enviar`
+
+`POST /api/relatorio` com `{"id": "<download>"}` (opcional) monta o relatório de erro, já sem dados pessoais: `{"titulo", "texto", "email": true|false}` (`email`: se há um e-mail de suporte configurado). `POST /api/relatorio/enviar` com `{"destino": "github"|"email", "titulo", "descricao", "texto"}` abre o novo *Issue* do GitHub no navegador (ou o programa de e-mail) com o relatório preenchido. Se o texto for grande demais para caber no endereço, o fim é cortado (avisando no próprio relatório).
+
+### `GET /api/fila`
+
+Os downloads que ainda não terminaram, na ordem da fila: `[{"id_download", "url", "formato", "qualidade", "titulo", "origem": "painel"|"extensao", "trecho": [inicio, fim|null] | null, "status", "retomado"}]`. `retomado` é `true` para os que voltaram de quando o programa fechou. O painel usa ao abrir (e ao recarregar a página) para mostrar a lista. No `POST /api/download`, o campo opcional `titulo` (o da prévia) é o que aparece aqui.
+
 ### `GET /api/progresso/<id>`
 
 Retorna o status do download. Quando fica pronto, `titulo` e `arquivo` (nome do arquivo na pasta Downloads) são preenchidos.
@@ -471,7 +516,11 @@ Corpo: `{"versao": "2.1.0"}`. Usado pelo botão **Depois**: o painel não mostra
 
 ### `POST /api/atualizar`
 
-Baixa e instala a versão nova e reinicia o programa. Responde `409` se houver downloads em andamento.
+Baixa e instala a versão nova e reinicia o programa. Responde `{"versao": "<versão nova>"}`, ou `409` se houver downloads em andamento.
+
+### `GET /api/atualizar/andamento`
+
+No programa gerado, enquanto o `POST /api/atualizar` baixa a versão nova: `{"etapa": "baixando" | "extraindo" | null, "baixado": <bytes>, "total": <bytes>}`. O painel usa para mostrar a porcentagem.
 
 ### `GET /api/preferencias` e `POST /api/preferencias`
 
@@ -504,7 +553,7 @@ Usadas pela janela do programa: `modo` diz se o painel está na janela própria 
 
 ## Observações
 
-- O status dos downloads fica em memória: ao fechar o programa, a fila e os status são perdidos.
+- A fila de downloads fica guardada em `.fila.json` (só os que não terminaram); o status de cada um, em memória.
 - O servidor (Waitress) atende só o próprio PC (`127.0.0.1`). Para hospedar num servidor de verdade, use **um único processo**, porque a fila de downloads fica em memória.
 - Respeite os termos de uso das plataformas e os direitos autorais do conteúdo baixado.
 

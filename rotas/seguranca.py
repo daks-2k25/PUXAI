@@ -11,6 +11,11 @@ atualizar...). Cada pedido passa por três conferências antes de chegar às rot
    site. Outro site, ou outro programa em outra porta, é recusado.
 3. Origem (Origin): se vier, tem que ser exatamente o endereço do painel.
 
+Exceção: a extensão do navegador (pasta extensao/) pode usar só as rotas
+/api/extensao/... (pôr um link na fila e ver se o programa está aberto). Um
+site não consegue se passar por extensão: o navegador não deixa uma página
+mandar Origin "chrome-extension://..." ou "moz-extension://...".
+
 Programas fora do navegador (curl, scripts) não mandam Sec-Fetch-Site nem
 Origin, então continuam podendo usar a API.
 """
@@ -20,15 +25,19 @@ from servicos import programa
 
 ENDERECOS_LOCAIS = ("127.0.0.1", "localhost")
 ORIGENS_DO_PAINEL = {f"http://{endereco}:{programa.PORTA}" for endereco in ENDERECOS_LOCAIS}
+ORIGENS_DE_EXTENSAO = ("chrome-extension://", "moz-extension://")
+ROTAS_DA_EXTENSAO = "/api/extensao/"
 
 
 def pedido_permitido():
     endereco = request.host.rsplit(":", 1)[0] if ":" in request.host else request.host
     if endereco not in ENDERECOS_LOCAIS:
         return False
+    origem = request.headers.get("Origin")
+    if origem and origem.startswith(ORIGENS_DE_EXTENSAO):
+        return request.path.startswith(ROTAS_DA_EXTENSAO)
     if request.headers.get("Sec-Fetch-Site") in ("cross-site", "same-site"):
         return False
-    origem = request.headers.get("Origin")
     return origem is None or origem in ORIGENS_DO_PAINEL
 
 

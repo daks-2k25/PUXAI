@@ -1,0 +1,125 @@
+/* As mesmas cores do painel do Puxaí (claro e escuro, conforme o sistema) */
+:root {
+    --fundo: #fff4ea;
+    --superficie: #ffffff;
+    --borda: rgba(28, 25, 23, 0.14);
+    --texto: #1c1917;
+    --texto-suave: #8a827b;
+    --destaque: #e8551f;
+    --degrade: linear-gradient(120deg, #e8551f 0%, #f6822b 45%, #ffb23d 100%);
+    --ok: #2f8a4c;
+    --erro: #c2410c;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fundo: #150f0c;
+        --superficie: #2c2019;
+        --borda: rgba(255, 236, 222, 0.17);
+        --texto: #f6ece4;
+        --texto-suave: #ae9f94;
+        --ok: #6fcf8e;
+        --erro: #ff8a5c;
+        color-scheme: dark;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    width: 320px;
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fundo);
+    color: var(--texto);
+}
+
+header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--borda);
+}
+
+main { padding: 14px; display: grid; gap: 10px; }
+
+.mensagem { margin: 0; color: var(--texto-suave); }
+.mensagem.ok { color: var(--ok); }
+.mensagem.erro { color: var(--erro); }
+
+.titulo {
+    margin: 0 0 10px;
+    font-weight: 600;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+#baixar { display: grid; gap: 8px; }
+#baixar[hidden] { display: none; }
+
+.linha { display: flex; gap: 8px; }
+
+.botao {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: var(--superficie);
+    color: var(--texto);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.botao:hover { border-color: var(--destaque); }
+.botao.principal { border: 0; background: var(--degrade); color: #fff; }
+.botao:disabled { opacity: 0.6; cursor: default; }
+
+select {
+    padding: 0 8px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: var(--superficie);
+    color: var(--texto);
+    font: inherit;
+}
+
+.botao-texto {
+    justify-self: start;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--destaque);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--borda);
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+summary { cursor: pointer; }
+details label { display: grid; gap: 4px; margin-top: 6px; }
+
+details input {
+    width: 90px;
+    padding: 4px 6px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: var(--superficie);
+    color: var(--texto);
+}

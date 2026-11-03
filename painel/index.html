@@ -81,6 +81,10 @@
             <div id="config-pastas" class="config-pastas"></div>
             <p id="config-pastas-dica" class="config-dica"></p>
           </div>
+
+          <div class="config-secao">
+            <button type="button" id="config-relatar" class="botao-texto">⚠ Algo deu errado? Relatar um problema</button>
+          </div>
         </div>
 
         <img class="logo" src="logo.webp" alt="Logo do Puxaí" />
@@ -232,6 +236,7 @@
           <span id="downloads-contagem"></span>
           <button type="button" id="cancelar-todos" class="item-botao cancelar">✕ Cancelar todos</button>
         </div>
+        <p id="fila-retomada" class="status escondido"></p>
         <ul id="lista-downloads"></ul>
       </section>
 
@@ -361,6 +366,26 @@
       <div class="atualizacao-botoes">
         <button type="button" id="toast-atualizar" class="botao-atualizar">⬆ Atualizar agora</button>
         <button type="button" id="toast-depois" class="botao-depois">Depois</button>
+      </div>
+    </div>
+
+    <!-- Relatório de erro: a pessoa confere o texto antes de enviar (preenchido pelo script.js) -->
+    <div id="relatorio" class="relatorio-fundo escondido" role="dialog" aria-modal="true" aria-labelledby="relatorio-titulo">
+      <div class="relatorio">
+        <strong id="relatorio-titulo" class="relatorio-titulo">Relatar um problema</strong>
+        <label class="relatorio-rotulo" for="relatorio-descricao">O que aconteceu? <span>(opcional)</span></label>
+        <textarea id="relatorio-descricao" rows="3"
+          placeholder="Ex.: cliquei em Baixar agora e, depois de alguns segundos, apareceu Erro ao baixar"></textarea>
+        <label class="relatorio-rotulo" for="relatorio-texto">O que vai ser enviado</label>
+        <p class="relatorio-dica">Sem o seu nome, as suas pastas nem os links completos (só o site). Pode apagar o que quiser.</p>
+        <textarea id="relatorio-texto" class="relatorio-texto" rows="11" spellcheck="false"></textarea>
+        <div class="relatorio-botoes">
+          <button type="button" id="relatorio-github" class="botao-atualizar">Enviar pelo GitHub</button>
+          <button type="button" id="relatorio-email" class="botao-depois" hidden>Enviar por e-mail</button>
+          <button type="button" id="relatorio-copiar" class="botao-depois">Copiar</button>
+          <button type="button" id="relatorio-fechar" class="botao-depois">Fechar</button>
+        </div>
+        <p id="relatorio-mensagem" class="relatorio-dica"></p>
       </div>
     </div>
 
