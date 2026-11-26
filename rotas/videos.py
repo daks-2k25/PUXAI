@@ -51,8 +51,8 @@ def download_api():
     formato = dados.get('formato', 'mp4')
     id_download = str(dados.get('id', uuid.uuid4()))
 
-    if formato not in ('mp4', 'mp3'):
-        return jsonify({"erro": "Formato inválido. Use 'mp4' ou 'mp3'."}), 400
+    if formato not in ('mp4', 'mp3', 'imagem'):
+        return jsonify({"erro": "Formato inválido. Use 'mp4', 'mp3' ou 'imagem'."}), 400
 
     if e_playlist_sem_video(url):
         return jsonify({"erro": "Este link é de uma playlist. Playlists não são permitidas: envie o link de um vídeo só."}), 400

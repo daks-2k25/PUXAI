@@ -5,6 +5,7 @@
 // únicas que o Puxaí aceita de uma extensão.
 //
 // - Botão direito num link, num vídeo ou na página: "Baixar vídeo/MP3 com o Puxaí"
+// - Botão direito numa imagem ou num vídeo: baixa aquele arquivo (ex.: referências do Dribbble)
 // - Atalhos: Alt+Shift+P (MP4) e Alt+Shift+M (MP3), mudam em chrome://extensions/shortcuts
 // - A janelinha do botão da barra (janela.js) também pede por aqui
 
@@ -40,9 +41,27 @@ async function chamar(caminho, corpo) {
 
 const estado = () => chamar("/api/extensao/estado");
 
-async function enviar(url, formato, titulo) {
+async function enviar(url, formato, titulo, arquivo = false) {
     const { qualidade } = await chrome.storage.local.get("qualidade");
-    return chamar("/api/extensao/enviar", { url, formato, qualidade: qualidade || QUALIDADE_PADRAO, titulo });
+    return chamar("/api/extensao/enviar", { url, formato, qualidade: qualidade || QUALIDADE_PADRAO, titulo, arquivo });
+}
+
+// A imagem ou o arquivo de vídeo em que a pessoa clicou com o botão direito
+async function enviarArquivo(url, formato) {
+    if (!/^https?:/i.test(url || "")) {
+        // "blob:" ou "data:": o conteúdo só existe dentro da página
+        avisar(formato === "imagem"
+            ? "Esta imagem não tem um endereço que dê para baixar."
+            : "Este vídeo não tem um arquivo direto. Use \"Baixar vídeo com o Puxaí (MP4)\" fora do vídeo, na página.");
+        return;
+    }
+    const resultado = await enviar(url, formato, null, true);
+    if (resultado.erro) {
+        // "Formato inválido": o programa aberto é anterior a esta versão da extensão
+        avisar(resultado.erro === "Formato inválido." ? "Atualize o Puxaí para baixar imagens." : resultado.erro);
+        return;
+    }
+    avisar(`Na fila do Puxaí (${resultado.site}, ${formato === "imagem" ? "imagem" : "arquivo de vídeo"}).`);
 }
 
 function avisar(mensagem) {
@@ -77,10 +96,24 @@ chrome.runtime.onInstalled.addListener(() => {
                 documentUrlPatterns: ["http://*/*", "https://*/*"],
             });
         }
+        for (const [id, titulo, contexto] of [
+            ["puxai-imagem", "Baixar imagem com o Puxaí", "image"],
+            ["puxai-arquivo-video", "Baixar este arquivo de vídeo com o Puxaí", "video"],
+        ]) {
+            chrome.contextMenus.create({
+                id, title: titulo, contexts: [contexto],
+                documentUrlPatterns: ["http://*/*", "https://*/*"],
+            });
+        }
     });
 });
 
 chrome.contextMenus.onClicked.addListener((info, aba) => {
+    // Antes do link: uma imagem (ou vídeo) clicável tem os dois, e aqui a escolha foi o arquivo
+    if (info.menuItemId === "puxai-imagem" || info.menuItemId === "puxai-arquivo-video") {
+        enviarArquivo(info.srcUrl, info.menuItemId === "puxai-imagem" ? "imagem" : "mp4");
+        return;
+    }
     const formato = info.menuItemId === "puxai-mp3" ? "mp3" : "mp4";
     if (info.linkUrl) {
         // Num link: o vídeo é o do link (o título vem quando o download terminar)

@@ -6,20 +6,32 @@ import re
 import shutil
 import threading
 import time
+import urllib.error
+import urllib.request
+from urllib.parse import parse_qs, unquote, urlparse
 
 import yt_dlp
+from yt_dlp.networking import Request
 from yt_dlp.postprocessor import PostProcessor
 from yt_dlp.utils import DownloadCancelled, download_range_func
 
 from servicos import destinos, estatisticas, historico
 from servicos.caminhos import PASTA_BASE, PASTA_DOWNLOADS
-from servicos.sites import mensagem_de_erro, opcoes_de_login, titulo_amigavel
+from servicos.sites import SITES_COM_FOTOS, LinkInvalido, link_real,mensagem_de_erro, opcoes_de_login, post_sem_video, titulo_amigavel
 
 # Quantos downloads rodam ao mesmo tempo (os outros esperam na fila)
 DOWNLOADS_SIMULTANEOS = 3
 
 # Quantas vezes tenta baixar antes de marcar "Erro"
 TENTATIVAS = 2
+
+# Download de imagem por link: tamanho máximo e tipos aceitos (tipo que o site informa -> extensão)
+LIMITE_IMAGEM = 50 * 1024 * 1024
+TIPOS_DE_IMAGEM = {
+    "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+    "image/heic": "heic", "image/heif": "heic", "image/svg+xml": "svg",
+}
+EXTENSOES_DE_IMAGEM = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".svg")
 
 # Status que indicam que o download acabou (deu certo ou não)
 STATUS_FINAIS = ("Pronto", "Erro", "Cancelado")
@@ -32,6 +44,10 @@ cancelados = set()     # IDs que o usuário pediu para cancelar
 erros_download = {}    # ID -> mensagem explicando por que o download falhou
 extras_download = {}   # ID -> dados a mais para o painel (ex.: tamanho antes/depois de comprimir um vídeo)
 pedidos_download = {}  # ID -> link, formato e qualidade (para o relatório de erro, mesmo depois de terminar)
+# ID -> (hora, tarefa) do que chegou pela extensão há pouco. Uma imagem termina antes de o
+# painel perguntar pela fila; sem isto, ela (ou o erro dela) nunca apareceria na lista
+recentes_da_extensao = {}
+SEGUNDOS_RECENTE = 30
 fila_downloads = queue.Queue()
 
 # Fila guardada em arquivo: o que ainda não terminou (na fila ou baixando). Se o
@@ -198,6 +214,161 @@ def _registrar_estatistica(tarefa):
     )
 
 
+def _extensao_da_imagem(dados):
+    """Pelo começo do arquivo: o Pinterest guarda o original como foi enviado (JPG, PNG, GIF ou WebP)."""
+    if dados.startswith(b"\x89PNG"):
+        return "png"
+    if dados.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if dados[8:12] == b"WEBP":
+        return "webp"
+    return "jpg"
+
+
+def salvar_fotos_do_post(tarefa):
+    """Post do Instagram ou pin do Pinterest sem vídeo (uma foto ou um carrossel de fotos):
+    salva as fotos em tamanho original, no formato original, na pasta de fotos. Devolve True se salvou."""
+    id_download, url = tarefa["id_download"], link_real(tarefa["url"])
+    opcoes = {"quiet": True, "no_warnings": True, "ignore_no_formats_error": True, **opcoes_de_login()}
+    with yt_dlp.YoutubeDL(opcoes) as ydl:
+        info = ydl.extract_info(url, download=False)
+        if info.get("extractor_key") not in SITES_COM_FOTOS:
+            return False
+        # Carrossel: um item por foto (os itens que são vídeos ficam de fora)
+        itens = [e for e in (info.get("entries") or [info]) if e and not e.get("formats") and e.get("thumbnail")]
+        if not itens:
+            return False
+
+        titulo = titulo_amigavel(info)
+        if titulo.lower().startswith("vídeo de "):  # "Vídeo de fulano" (post sem legenda)
+            titulo = "Foto de " + titulo[len("vídeo de "):]
+        pasta = destinos.pasta_para("foto")
+        nome = nome_de_arquivo_seguro(titulo)
+        salvos = []
+        for numero, item in enumerate(itens, 1):
+            if id_download in cancelados:
+                raise DownloadCancelled("Cancelado pelo usuário")
+            status_download[id_download] = f"Baixando foto {numero} de {len(itens)}..." if len(itens) > 1 else "Baixando a foto..."
+            # "thumbnail" é a foto inteira, no tamanho original (as outras são recortes e versões menores)
+            dados = ydl.urlopen(Request(item["thumbnail"], headers=item.get("http_headers") or {})).read()
+            extensao = _extensao_da_imagem(dados)
+            destino = caminho_sem_sobrescrever(
+                pasta, nome if len(itens) == 1 else f"{nome} ({numero} de {len(itens)})", extensao)
+            with open(destino, "wb") as f:
+                f.write(dados)
+            historico.registrar(f"{id_download}-{numero}" if numero > 1 else id_download, destino, titulo, url)
+            salvos.append(destino)
+
+    titulos_download[id_download] = titulo
+    arquivos_salvos[id_download] = salvos[0]
+    extras_download[id_download] = {"fotos": len(salvos)}
+    status_download[id_download] = "Pronto"
+    print(f"[FILA] Post sem vídeo: {len(salvos)} foto(s) salva(s) em {pasta}")
+    return True
+
+
+def _ler_imagem(id_download, url):
+    """Baixa a imagem do link para a memória. Devolve (dados, extensao); ValueError traz o motivo da falha."""
+    if not url.lower().startswith(("http://", "https://")):
+        raise ValueError("O link precisa começar com http:// ou https://.")
+    pedido = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(pedido, timeout=30) as resposta:
+            extensao = TIPOS_DE_IMAGEM.get(resposta.headers.get_content_type())
+            if not extensao:
+                raise ValueError("Este link não é de uma foto. Use um post do Instagram, um pin do Pinterest ou o "
+                                 "endereço de uma imagem. Para baixar um vídeo, use a aba Vídeos.")
+            total = resposta.length or 0
+            dados = bytearray()
+            while pedaco := resposta.read(64 * 1024):
+                if id_download in cancelados:
+                    raise DownloadCancelled("Cancelado pelo usuário")
+                dados += pedaco
+                if max(total, len(dados)) > LIMITE_IMAGEM:
+                    raise ValueError(f"A imagem passa de {LIMITE_IMAGEM // 1024 // 1024} MB.")
+                if total:
+                    status_download[id_download] = f"{len(dados) / total * 100:.1f}%"
+    except urllib.error.HTTPError as e:
+        raise ValueError(f"O site recusou o download (erro {e.code}).") from e
+    except OSError as e:
+        raise ValueError("Não foi possível acessar o link.") from e
+    return bytes(dados), extensao
+
+
+def _endereco_da_imagem(url):
+    """Link do Google Imagens (google.com/imgres?imgurl=...): o endereço da imagem que vem dentro dele."""
+    partes = urlparse(url)
+    if partes.path == "/imgres" and "google." in (partes.hostname or ""):
+        url = parse_qs(partes.query).get("imgurl", [url])[0]
+        partes = urlparse(url)
+    # Dribbble: "?resize=400x300..." pede uma cópia menor; sem isso vem a imagem como foi enviada
+    if partes.hostname == "cdn.dribbble.com" and "resize" in parse_qs(partes.query):
+        return partes._replace(query="").geturl()
+    return url
+
+
+def _site_do_post(url):
+    """"instagram" ou "pinterest" se o link é de uma página desses sites; None se não for.
+    (As imagens de i.pinimg.com são links diretos, não páginas.)"""
+    host = (urlparse(url).hostname or "").lower()
+    if host == "instagram.com" or host.endswith(".instagram.com"):
+        return "instagram"
+    if host in ("pin.it", "www.pin.it") or re.fullmatch(r"([a-z]{2,3}\.)?pinterest\.[a-z]{2,3}(\.[a-z]{2})?", host):
+        return "pinterest"
+    return None
+
+
+def _baixar_foto_de_post(tarefa, url, site):
+    """Aba Fotos com o link de um post (Instagram) ou pin (Pinterest)."""
+    id_download = tarefa["id_download"]
+    try:
+        status_download[id_download] = "Abrindo o post..."
+        endereco = link_real(url)
+        # Uma pasta do Pinterest tem centenas de pins: aqui é um pin de cada vez
+        if site == "pinterest" and "/pin/" not in endereco:
+            raise LinkInvalido("Cole o link de um pin do Pinterest (não o de uma pasta ou perfil).")
+        if not salvar_fotos_do_post({**tarefa, "url": endereco}):
+            raise LinkInvalido("Não encontrei foto neste post. Se for um vídeo, use a aba Vídeos.")
+    except DownloadCancelled:
+        status_download[id_download] = "Cancelado"
+    except Exception as e:
+        print(f"[FILA] Erro nas fotos do post {id_download}: {e}")
+        erros_download[id_download] = str(e) if isinstance(e, LinkInvalido) else (
+            "Não foi possível abrir esse post. Ele pode ser privado, ter sido apagado ou exigir login "
+            "(veja no README como usar o arquivo cookies.txt).")
+        status_download[id_download] = "Erro"
+
+
+def baixar_imagem(tarefa):
+    """Aba Fotos: post do Instagram, pin do Pinterest ou link direto de uma imagem. A imagem do
+    link direto vai para a pasta de fotos com o nome que ela tem no link."""
+    id_download, url = tarefa["id_download"], _endereco_da_imagem(tarefa["url"])
+    if site := _site_do_post(url):
+        return _baixar_foto_de_post(tarefa, url, site)
+    try:
+        status_download[id_download] = "Baixando..."
+        dados, extensao = _ler_imagem(id_download, url)
+        nome = os.path.splitext(os.path.basename(unquote(urlparse(url).path)))[0]
+        titulo = nome_de_arquivo_seguro(nome)[:100] or "imagem"
+        destino = caminho_sem_sobrescrever(destinos.pasta_para("foto"), titulo, extensao)
+        with open(destino, "wb") as f:
+            f.write(dados)
+    except DownloadCancelled:
+        status_download[id_download] = "Cancelado"
+        return
+    except (ValueError, OSError) as e:
+        print(f"[FILA] Erro na imagem {id_download}: {e}")
+        erros_download[id_download] = str(e)
+        status_download[id_download] = "Erro"
+        return
+
+    titulos_download[id_download] = titulo
+    arquivos_salvos[id_download] = destino
+    historico.registrar(id_download, destino, titulo, url)
+    status_download[id_download] = "Pronto"
+    print(f"[FILA] Imagem salva em: {destino}")
+
+
 def processar(tarefa):
     url = tarefa["url"]
     formato = tarefa["formato"]
@@ -209,6 +380,14 @@ def processar(tarefa):
     # Cancelado enquanto ainda esperava na fila
     if id_download in cancelados:
         status_download[id_download] = "Cancelado"
+        return
+
+    # Link de imagem colado na aba Vídeos também é salvo como foto: o yt-dlp "baixaria"
+    # a imagem e a transformaria num .mp4
+    if formato == "imagem" or urlparse(url).path.lower().endswith(EXTENSOES_DE_IMAGEM):
+        baixar_imagem(tarefa)
+        if status_download.get(id_download) == "Pronto":
+            extras_download.setdefault(id_download, {"fotos": 1})  # o painel mostra "foto", não "MP4"
         return
 
     os.makedirs(PASTA_DOWNLOADS, exist_ok=True)
@@ -304,7 +483,7 @@ def processar(tarefa):
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     if formato == "mp3":
                         ydl.add_post_processor(DadosDoMp3(), when='pre_process')
-                    info = ydl.extract_info(url, download=True)
+                    info = ydl.extract_info(link_real(url), download=True)
                 parar_se_cancelado()
 
                 if os.path.exists(caminho_temporario):
@@ -344,6 +523,15 @@ def processar(tarefa):
             except Exception as e:
                 if id_download in cancelados:
                     raise DownloadCancelled("Cancelado pelo usuário")
+                # Post do Instagram que é foto (ou carrossel de fotos): baixa as fotos
+                if post_sem_video(e):
+                    try:
+                        if salvar_fotos_do_post(tarefa):
+                            break
+                    except DownloadCancelled:
+                        raise
+                    except Exception as erro_das_fotos:
+                        print(f"[FILA] Não foi possível baixar as fotos do post {id_download}: {erro_das_fotos}")
                 print(f"[FILA] Erro no ID {id_download} (tentativa {tentativa}/{TENTATIVAS}): {e}")
                 erros_download[id_download] = mensagem_de_erro(e)
 
@@ -387,6 +575,8 @@ def adicionar_fila(url, formato, qualidade, id_download, trecho=None, pasta=None
         "origem": origem,
     }
     tarefas_pendentes[id_download] = tarefa
+    if origem == "extensao":
+        recentes_da_extensao[id_download] = (time.monotonic(), tarefa)
     pedidos_download[id_download] = {"url": url, "formato": formato, "qualidade": qualidade, "trecho": bool(trecho)}
     _salvar_fila()
     fila_downloads.put(tarefa)
@@ -409,13 +599,19 @@ def retomar_fila():
 
 
 def fila_atual():
-    """Os downloads que ainda não terminaram, na ordem da fila (para o painel montar a lista)."""
+    """Os downloads que ainda não terminaram, na ordem da fila (para o painel montar a lista),
+    mais os da extensão que acabaram de terminar."""
+    tarefas = {i: t for i, t in list(tarefas_pendentes.items()) if status_download.get(i) not in STATUS_FINAIS}
+    for id_download, (hora, tarefa) in list(recentes_da_extensao.items()):
+        if time.monotonic() - hora > SEGUNDOS_RECENTE:
+            recentes_da_extensao.pop(id_download, None)
+        else:
+            tarefas.setdefault(id_download, tarefa)
     return [
         {**{k: t[k] for k in ("id_download", "url", "formato", "qualidade", "titulo", "origem")},
          "trecho": _trecho_para_salvar(t["trecho"]), "status": status_download.get(t["id_download"]),
          "retomado": t["id_download"] in retomados}
-        for t in list(tarefas_pendentes.values())
-        if status_download.get(t["id_download"]) not in STATUS_FINAIS
+        for t in tarefas.values()
     ]
 
 

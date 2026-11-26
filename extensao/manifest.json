@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Baixar com o Puxaí",
-  "version": "1.0.0",
-  "description": "Manda o vídeo da página para o Puxaí baixar em MP4 ou MP3. O programa Puxaí precisa estar aberto no computador.",
+  "version": "1.1.0",
+  "description": "Manda vídeos (MP4 ou MP3) e imagens da página para o Puxaí. O programa precisa estar aberto no computador.",
   "icons": {
     "16": "icones/icone-16.png",
     "32": "icones/icone-32.png",

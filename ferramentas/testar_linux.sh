@@ -106,6 +106,15 @@ conferir "converter PNG para WebP" "(HTTP $codigo)" sh -c "[ '$codigo' = 200 ] &
 
 conferir "comprimir foto (usa o ffprobe)" "" sh -c "curl -s -F 'arquivo=@$imagem' -F 'nivel=forte' '$ENDERECO/api/comprimir' | grep -q ."
 
+# Documentos: a foto vira PDF (prova que o PDFium veio junto), o PDF vira imagem e é comprimido
+id_pdf=$(curl -s -F "arquivos=@$imagem" -F "tamanho=a4" -F "nome=teste-puxai" "$ENDERECO/api/documentos/fotos-para-pdf" \
+    | sed -n 's/.*"id": *"\([^"]*\)".*/\1/p')
+conferir "foto vira PDF (PDFium incluído)" "($id_pdf)" test -n "$id_pdf"
+curl -s -o "$COPIA/teste.pdf" "$ENDERECO/api/arquivo/$id_pdf"
+conferir "PDF vira imagem" "" sh -c "curl -s -F 'arquivo=@$COPIA/teste.pdf' -F 'formato=jpg' '$ENDERECO/api/documentos/pdf-para-imagens' | grep -Eq '\"quantidade\": *1'"
+codigo=$(curl -s -o /dev/null -w "%{http_code}" -F "arquivo=@$COPIA/teste.pdf" "$ENDERECO/api/documentos/comprimir")
+conferir "comprimir PDF (pypdf incluído)" "(HTTP $codigo)" test "$codigo" = 200
+
 # Segurança: um pedido "de outro site" tem que ser recusado
 codigo=$(curl -s -o /dev/null -w "%{http_code}" -H "Origin: https://site-ruim.com" -H "Sec-Fetch-Site: cross-site" "$ENDERECO/api/qualidades")
 conferir "pedido de outro site recusado" "(HTTP $codigo)" test "$codigo" = 403

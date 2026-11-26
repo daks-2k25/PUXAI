@@ -147,7 +147,8 @@ def abrir_janela():
     tema = preferencias.tema_em_uso()
     janela = programa.janela = webview.create_window(
         TITULO, programa.ENDERECO_PAINEL,
-        width=760, height=900, min_size=(440, 620), background_color=FUNDO[tema],
+        # 1000 de largura: a barra lateral + a ferramenta com folga (cabe em telas de notebook, 1366)
+        width=1000, height=900, min_size=(440, 620), background_color=FUNDO[tema],
     )
 
     def ao_mostrar():

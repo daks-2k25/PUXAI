@@ -4,6 +4,8 @@ O Puxaí baixa de qualquer site que o yt-dlp conhece (mais de mil): YouTube,
 TikTok, Instagram, X, Facebook, Twitch, SoundCloud, Dailymotion, Vimeo...
 """
 import os
+import urllib.parse
+import urllib.request
 from urllib.parse import parse_qs, urlparse
 
 from servicos.caminhos import PASTA_BASE
@@ -71,11 +73,11 @@ def nome_do_site(info):
 
 
 def titulo_amigavel(info):
-    """O Instagram devolve títulos como "Video by fulano"; nesses casos usa a
-    primeira linha da legenda do post, que descreve melhor o vídeo."""
+    """O Instagram devolve títulos como "Video by fulano" e o Pinterest, "Pinterest video #123";
+    nesses casos usa a primeira linha da legenda (ou descrição), que descreve melhor."""
     titulo = (info.get("title") or "").strip()
     autor = info.get("channel") or info.get("uploader") or ""
-    if not titulo or titulo.lower().startswith(("video by ", "post by ")):
+    if not titulo or titulo.lower().startswith(("video by ", "post by ", "pinterest video #")):
         legenda = (info.get("description") or "").strip().splitlines()
         primeira_linha = legenda[0].strip() if legenda else ""
         if primeira_linha:
@@ -92,7 +94,42 @@ COOKIES_NO_MEIO = "coloque um arquivo cookies.txt ao lado do programa (veja o RE
 
 # (trechos da mensagem do yt-dlp, mensagem para quem usa). A ordem importa: a
 # primeira que combinar vale (ex.: "Private video. Sign in..." é "privado", não "login").
+# Sites em que um post sem vídeo é uma foto (ou várias): o Puxaí baixa a(s) foto(s)
+SITES_COM_FOTOS = ("Instagram", "Pinterest")
+
+
+class LinkInvalido(ValueError):
+    """Link que dá para saber, sem o yt-dlp, que não funciona (a mensagem já é para quem usa)."""
+
+
+def link_real(url):
+    """Links curtos do Pinterest (pin.it/..., os do botão Compartilhar do app) viram o link
+    do pin, que o yt-dlp entende. Os outros links voltam como estão."""
+    if urllib.parse.urlsplit(url).netloc.lower().removeprefix("www.") != "pin.it":
+        return url
+    pedido = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(pedido, timeout=15) as resposta:
+        final = resposta.geturl()
+    if "/pin/" not in final:
+        # Link curto que não existe (ou expirou): o Pinterest manda para a página inicial
+        raise LinkInvalido("Esse link curto do Pinterest não leva a nenhum pin (pode ter expirado). "
+                         "Abra o pin e copie o link de novo.")
+    return final
+
+
+# Frases do yt-dlp para "este post não tem vídeo" (no Instagram e no Pinterest, o Puxaí baixa a foto)
+SEM_VIDEO = ("there is no video", "there's no video", "no video could be found", "no video formats", "no media found")
+
+
+def post_sem_video(erro):
+    return any(trecho in str(erro).lower() for trecho in SEM_VIDEO)
+
+
 MENSAGENS = [
+    # Falha no próprio computador, não no link (veja servicos/certificados.py)
+    (("curl: (77)", "trust anchors"),
+     "O Puxaí não conseguiu abrir os certificados de segurança neste computador. Feche e abra o programa; "
+     "se continuar, mova a pasta do Puxaí para um caminho sem acentos."),
     # O Instagram responde assim tanto para post apagado/privado quanto para post que pede login
     (("empty media response",),
      "Não foi possível abrir esse post do Instagram. Ele pode ser privado, ter sido apagado "
@@ -108,8 +145,8 @@ MENSAGENS = [
      f"Esse vídeo tem restrição de idade e só abre com login. {COOKIES}"),
     (("login", "logged-in", "log in", "sign in", "authentication", "cookies", "rate-limit"),
      f"Esse vídeo exige login para ser baixado. {COOKIES}"),
-    (("no video could be found", "no video formats", "there's no video", "no media found"),
-     "Esse post não tem vídeo (só texto ou imagem)."),
+    (SEM_VIDEO,
+     "Esse post não tem vídeo nem foto que dê para baixar (só texto)."),
     (("unsupported url",),
      "O Puxaí não reconhece esse link. Confira se é o link do próprio vídeo (e não de um perfil "
      "ou da página inicial do site)."),
@@ -128,6 +165,8 @@ MENSAGENS = [
 
 def mensagem_de_erro(erro):
     """Traduz os erros mais comuns do yt-dlp para uma mensagem que o usuário entenda."""
+    if isinstance(erro, LinkInvalido):
+        return str(erro)
     texto = str(erro).lower()
     for trechos, mensagem in MENSAGENS:
         if any(trecho in texto for trecho in trechos):

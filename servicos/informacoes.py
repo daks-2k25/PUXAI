@@ -2,7 +2,7 @@ import threading
 
 import yt_dlp
 
-from servicos.sites import nome_do_site, opcoes_de_login, titulo_amigavel
+from servicos.sites import SITES_COM_FOTOS, link_real, nome_do_site, opcoes_de_login, titulo_amigavel
 
 # Guarda as últimas consultas: colar o mesmo link de novo responde na hora
 LIMITE_CACHE = 100
@@ -38,10 +38,33 @@ def obter_informacoes(url):
         'playlistend': 1,
         **opcoes_de_login(),
     }
+    endereco = link_real(url)  # pin.it/... (link curto do Pinterest) -> o link do pin
+    if any(site in endereco.lower() for site in ("instagram.com", "pinterest.")):
+        # Post (ou pin) de foto não tem vídeo: em vez de erro, a prévia mostra a foto (o Puxaí baixa ela)
+        opcoes['ignore_no_formats_error'] = True
+        opcoes.pop('playlistend')
     with yt_dlp.YoutubeDL(opcoes) as ydl:
-        info = ydl.extract_info(url, download=False)
+        info = ydl.extract_info(endereco, download=False)
 
-    if info.get("_type") == "playlist":
+    carrossel = info.get("extractor_key") == "Instagram" and info.get("_type") == "playlist"
+    foto = info.get("extractor_key") in SITES_COM_FOTOS and info.get("_type") != "playlist" and not info.get("formats")
+    if carrossel or foto:
+        # Carrossel do Instagram (vários itens num post) ou post/pin de foto: é um post só, não uma
+        # playlist (a pasta de um pin do Pinterest, essa sim, continua sendo uma lista)
+        itens = [e for e in (info.get("entries") or [info]) if e]
+        fotos = sum(1 for e in itens if not e.get("formats"))
+        resultado = {
+            "id": info.get("id"),
+            "titulo": titulo_amigavel(info),
+            "canal": info.get("channel") or info.get("uploader"),
+            "site": nome_do_site(info),
+            "duracao": "",
+            "miniatura": info.get("thumbnail") or next((e.get("thumbnail") for e in itens if e.get("thumbnail")), None),
+            "youtube": False,
+            "fotos": fotos,  # o painel avisa que vai baixar a(s) foto(s)
+            "videos": len(itens) - fotos,
+        }
+    elif info.get("_type") == "playlist":
         # Canal, álbum, playlist sem "list=" no link...: o painel abre a lista de vídeos
         resultado = {"playlist": True, "titulo": info.get("title")}
     else:

@@ -542,6 +542,13 @@ function atualizarPrevia() {
             // Ex.: "clinicavittace · Instagram"
             previaCanal.textContent = [dados.canal, dados.site].filter(Boolean).join(" · ");
             previaDuracao.textContent = dados.duracao || "";
+            // Post do Instagram ou pin do Pinterest que é foto (ou carrossel): o Puxaí baixa as fotos
+            if (dados.fotos) {
+                previaDuracao.textContent = dados.fotos === 1 ? "📷 Foto" : `📷 ${dados.fotos} fotos`;
+                previaCanal.textContent += dados.fotos === 1
+                    ? " · é uma foto: o Puxaí salva a imagem original"
+                    : ` · o Puxaí salva as ${dados.fotos} fotos`;
+            }
             campoFim.placeholder = dados.duracao || "fim"; // dica para o corte
             if (!id && dados.miniatura) mostrarMiniatura(dados.miniatura);
         })
@@ -690,9 +697,48 @@ setInterval(async () => {
 }, 700);
 
 // "3 downloads em andamento · ✕ Cancelar todos" (aparece com 2 ou mais).
-// Conta só os downloads: as compressões de vídeo usam a mesma consulta de progresso.
+// ==========================================
+// BAIXAR FOTOS: posts do Instagram, pins do Pinterest e links de imagens (um por linha)
+// ==========================================
+const campoImagens = document.getElementById("links-imagens");
+const botaoImagens = document.getElementById("baixar-imagens");
+const imagensEncontradas = document.getElementById("imagens-encontradas");
+
+function atualizarImagens() {
+    const quantos = extrairLinks(campoImagens.value).length;
+    imagensEncontradas.textContent = quantos === 1 ? "1 link encontrado" : quantos ? `${quantos} links encontrados` : "";
+    botaoImagens.textContent = quantos > 1 ? `Baixar de ${quantos} links` : "Baixar foto";
+    botaoImagens.disabled = quantos === 0;
+}
+campoImagens.addEventListener("input", atualizarImagens);
+
+document.getElementById("form-imagens").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const links = extrairLinks(campoImagens.value);
+    botaoImagens.disabled = true;
+    const lote = document.createDocumentFragment();
+    for (const link of links) {
+        const nome = link.replace(/^https?:\/\/(www\.)?/, "");
+        const resposta = await fetch("/api/download", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: link, formato: "imagem", titulo: nome }),
+        }).catch(() => null);
+        const resultado = resposta ? await resposta.json().catch(() => ({})) : {};
+        const item = criarItem(resultado.id, "foto", nome, { inserir: false, deFotos: true });
+        if (!resposta || !resposta.ok) marcarErro(item, resultado.erro || "Não foi possível colocar na fila.");
+        lote.appendChild(item);
+    }
+    document.getElementById("lista-downloads-fotos").prepend(lote);
+    campoImagens.value = "";
+    atualizarImagens();
+});
+
+// Conta só os downloads da aba Vídeos: fotos têm a lista delas, e as compressões
+// de vídeo usam a mesma consulta de progresso.
 const topoDownloads = document.getElementById("downloads-topo");
 const idsDeDownload = new Set();
+const idsNaLista = new Set(); // tudo o que já tem item na tela (para não repetir)
 const downloadsAtivos = () => [...acompanhando.keys()].filter((id) => idsDeDownload.has(id));
 
 function atualizarTopoDownloads() {
@@ -715,7 +761,8 @@ function marcarErro(item, mensagem) {
 
 // Cria um item na lista e acompanha o progresso dele.
 // inserir: false quando quem chama coloca o item na lista (lote de uma playlist).
-function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
+// deFotos: o item é da aba Fotos.
+function criarItem(id, descricao, tituloDaPrevia, { inserir = true, deFotos = false } = {}) {
     const item = document.createElement("li");
     item.className = "item";
     item.innerHTML = `
@@ -730,7 +777,7 @@ function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
     `;
     // textContent (e não innerHTML): o título vem do vídeo e pode ter qualquer caractere
     item.querySelector(".item-titulo").textContent = tituloDaPrevia ? `${tituloDaPrevia} (${descricao})` : descricao;
-    if (inserir) document.getElementById("lista-downloads").prepend(item);
+    if (inserir) document.getElementById(deFotos ? "lista-downloads-fotos" : "lista-downloads").prepend(item);
     if (!id) return item; // nem entrou na fila (quem chamou marca o erro)
 
     const titulo = item.querySelector(".item-titulo");
@@ -746,7 +793,8 @@ function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
     });
 
     // Chamada pela consulta única de progresso; devolve true quando terminou
-    idsDeDownload.add(id);
+    idsNaLista.add(id);
+    if (!deFotos) idsDeDownload.add(id);
     acompanhando.set(id, (dados) => {
         status.textContent = dados.status;
 
@@ -757,13 +805,17 @@ function criarItem(id, descricao, tituloDaPrevia, { inserir = true } = {}) {
         if (dados.status === "Pronto") {
             barra.style.width = "100%";
             item.classList.add("pronto");
-            titulo.textContent = `${dados.titulo} (${descricao})`;
+            // Post (Instagram) ou pin (Pinterest) que era foto: salvou a(s) foto(s) em vez de um vídeo
+            const fotos = dados.extra?.fotos;
+            titulo.textContent = `${dados.titulo} (${fotos ? (fotos === 1 ? "foto" : `${fotos} fotos`) : descricao})`;
 
             // O arquivo já foi salvo na pasta Downloads (ou na pasta da playlist)
             acoes.innerHTML = `<span></span>
                 <button type="button" class="item-botao">📂 Mostrar na pasta</button>`;
             // Pasta escolhida em Configurações (ou a da playlist)
-            acoes.querySelector("span").textContent = `✓ Salvo em ${dados.pasta || "Downloads"}`;
+            acoes.querySelector("span").textContent = fotos > 1
+                ? `✓ ${fotos} fotos salvas em ${dados.pasta || "Downloads"}`
+                : `✓ Salvo em ${dados.pasta || "Downloads"}`;
             acoes.querySelector("span").title = dados.arquivo;
             acoes.querySelector("button").addEventListener("click", () => {
                 fetch(`/api/mostrar/${id}`, { method: "POST" })
@@ -808,21 +860,25 @@ async function mostrarFilaAtual({ primeiraVez = false } = {}) {
     const fila = await (await fetch("/api/fila")).json().catch(() => []);
     for (const tarefa of fila) {
         // Depois da primeira vez, só os da extensão: os do painel ele mesmo já pôs na lista
-        if (acompanhando.has(tarefa.id_download) || (!primeiraVez && tarefa.origem !== "extensao")) continue;
-        let descricao = tarefa.formato === "mp3" ? "MP3" : `MP4 ${tarefa.qualidade}p`;
+        if (idsNaLista.has(tarefa.id_download) || (!primeiraVez && tarefa.origem !== "extensao")) continue;
+        const deFotos = tarefa.formato === "imagem";
+        let descricao = deFotos ? "foto" : tarefa.formato === "mp3" ? "MP3" : `MP4 ${tarefa.qualidade}p`;
         if (tarefa.trecho) {
             const [inicio, fim] = tarefa.trecho;
             descricao += ` · trecho ${textoDoTempo(inicio)} a ${fim === null ? "fim" : textoDoTempo(fim)}`;
         }
-        criarItem(tarefa.id_download, descricao, tarefa.titulo || tarefa.url.replace(/^https?:\/\/(www\.)?/, ""));
+        criarItem(tarefa.id_download, descricao, tarefa.titulo || tarefa.url.replace(/^https?:\/\/(www\.)?/, ""), { deFotos });
     }
     if (!primeiraVez) return;
-    const retomados = fila.filter((tarefa) => tarefa.retomado).length;
-    const aviso = document.getElementById("fila-retomada");
-    aviso.textContent = retomados === 1
-        ? "↻ 1 download que não terminou da última vez continuou de onde parou."
-        : `↻ ${retomados} downloads que não terminaram da última vez continuaram de onde pararam.`;
-    aviso.classList.toggle("escondido", !retomados);
+    // Cada aba avisa sobre os downloads dela
+    for (const [idDoAviso, deFotos] of [["fila-retomada", false], ["fila-retomada-fotos", true]]) {
+        const retomados = fila.filter((tarefa) => tarefa.retomado && (tarefa.formato === "imagem") === deFotos).length;
+        const aviso = document.getElementById(idDoAviso);
+        aviso.textContent = retomados === 1
+            ? "↻ 1 download que não terminou da última vez continuou de onde parou."
+            : `↻ ${retomados} downloads que não terminaram da última vez continuaram de onde pararam.`;
+        aviso.classList.toggle("escondido", !retomados);
+    }
 }
 mostrarFilaAtual({ primeiraVez: true }).catch(() => {});
 setInterval(() => mostrarFilaAtual().catch(() => {}), 3000);
@@ -840,6 +896,10 @@ const botaoEmailRelatorio = document.getElementById("relatorio-email");
 let relatorioAtual = null;
 
 async function abrirRelatorio(id = null) {
+    if (contatoDisponivel) {
+        abrirFaleConosco("problema", id); // a aba "Fale com a gente" envia sem precisar de conta
+        return;
+    }
     fundoRelatorio.classList.remove("escondido");
     descricaoRelatorio.value = "";
     textoRelatorio.value = "Montando o relatório...";
@@ -915,6 +975,97 @@ document.getElementById("config-relatar").addEventListener("click", (evento) => 
     painelConfig.classList.add("escondido");
     botaoConfig.classList.remove("aberto");
     abrirRelatorio();
+});
+
+// ==========================================
+// FALE COM A GENTE: sugestões, problemas e outros assuntos
+// ==========================================
+// As mensagens vão para um Google Forms (o programa envia; ninguém precisa de conta).
+// A aba só aparece se houver um formulário configurado (servicos/contato.py).
+let contatoDisponivel = false;
+let tipoContato = "sugestao";
+let relatorioDoContato = { id: undefined, carregado: false };
+const textoContato = document.getElementById("contato-texto");
+const relatorioContato = document.getElementById("contato-relatorio");
+const resultadoContato = document.getElementById("contato-resultado");
+const DICAS_CONTATO = {
+    sugestao: "Ex.: seria ótimo se o Puxaí também baixasse legendas dos vídeos do YouTube.",
+    problema: "Ex.: colei um link do TikTok, cliquei em Baixar e apareceu \"Erro ao baixar\".",
+    outro: "Escreva o que quiser contar.",
+};
+
+fetch("/api/contato").then((r) => r.json()).then((dados) => {
+    contatoDisponivel = dados.disponivel;
+    document.querySelector('[data-aba="contato"]').hidden = !contatoDisponivel;
+}).catch(() => {});
+
+function escolherTipoContato(tipo) {
+    tipoContato = tipo;
+    document.querySelectorAll("#tipos-contato .chip").forEach((c) => c.classList.toggle("ativo", c.dataset.tipo === tipo));
+    textoContato.placeholder = DICAS_CONTATO[tipo];
+    const problema = tipo === "problema";
+    document.getElementById("contato-relatorio-bloco").hidden = !problema;
+    if (problema && !relatorioDoContato.carregado) carregarRelatorioDoContato(relatorioDoContato.id);
+}
+escolherChip("#tipos-contato", (d) => escolherTipoContato(d.tipo));
+escolherTipoContato("sugestao");
+
+async function carregarRelatorioDoContato(id = null) {
+    relatorioDoContato = { id, carregado: true };
+    relatorioContato.value = "Montando o relatório...";
+    const resposta = await fetch("/api/relatorio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+    }).catch(() => null);
+    const dados = resposta && resposta.ok ? await resposta.json() : null;
+    relatorioContato.value = dados ? `${dados.titulo}\n\n${dados.texto}` : "";
+}
+
+// Vindo do "⚠ Relatar problema" de um download: já abre em Problema, com o relatório dele
+function abrirFaleConosco(tipo, id = null) {
+    painelConfig.classList.add("escondido");
+    botaoConfig.classList.remove("aberto");
+    document.querySelector('[data-aba="contato"]').click();
+    relatorioDoContato = { id, carregado: false };
+    escolherTipoContato(tipo);
+    resultadoContato.textContent = "";
+    document.getElementById("contato").scrollIntoView({ behavior: "smooth", block: "start" });
+    textoContato.focus();
+}
+
+document.getElementById("contato-enviar").addEventListener("click", async (evento) => {
+    const botao = evento.currentTarget;
+    const mensagem = textoContato.value.trim();
+    if (mensagem.length < 3) {
+        resultadoContato.textContent = "Escreva a sua mensagem antes de enviar.";
+        textoContato.focus();
+        return;
+    }
+    const incluirRelatorio = tipoContato === "problema" && document.getElementById("contato-incluir-relatorio").checked;
+    botao.disabled = true;
+    botao.textContent = "Enviando...";
+    const resposta = await fetch("/api/contato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            tipo: tipoContato,
+            mensagem,
+            contato: document.getElementById("contato-contato").value.trim(),
+            relatorio: incluirRelatorio ? relatorioContato.value : "",
+        }),
+    }).catch(() => null);
+    const dados = resposta ? await resposta.json().catch(() => ({})) : {};
+    botao.disabled = false;
+    botao.textContent = "Enviar";
+    if (!resposta || !resposta.ok) {
+        resultadoContato.textContent = dados.erro || "Não foi possível enviar agora. Confira a internet e tente de novo.";
+        return;
+    }
+    resultadoContato.textContent = "✓ Recebemos a sua mensagem. Obrigado por ajudar a melhorar o Puxaí!";
+    textoContato.value = "";
+    relatorioDoContato = { id: null, carregado: false };
+    if (tipoContato === "problema") carregarRelatorioDoContato();
 });
 
 // ==========================================
@@ -1166,6 +1317,229 @@ function atualizarResumoCompressao() {
 }
 
 // ==========================================
+// FERRAMENTA 5: DOCUMENTOS (comprimir PDF, fotos -> PDF, PDF -> imagens)
+// ==========================================
+// Tudo acontece no próprio computador: nada é enviado para sites de fora.
+escolherChip("#modos-documento", (d) => {
+    document.querySelectorAll(".documento-modo").forEach((bloco) => (bloco.hidden = bloco.dataset.modo !== d.modo));
+});
+
+// Clique ou arraste: entrega a lista de arquivos para quem vai cuidar deles
+function prepararArea(area, campo, aoReceber) {
+    campo.addEventListener("change", () => {
+        aoReceber([...campo.files]);
+        campo.value = "";
+    });
+    area.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        area.classList.add("arrastando");
+    });
+    area.addEventListener("dragleave", () => area.classList.remove("arrastando"));
+    area.addEventListener("drop", (e) => {
+        e.preventDefault();
+        area.classList.remove("arrastando");
+        aoReceber([...e.dataTransfer.files]);
+    });
+}
+
+async function enviarFormulario(endereco, formulario) {
+    try {
+        const resposta = await fetch(endereco, { method: "POST", body: formulario });
+        return { ok: resposta.ok, dados: await resposta.json() };
+    } catch {
+        return { ok: false, dados: { erro: "Não foi possível falar com o programa." } };
+    }
+}
+
+function marcarErroFoto(item, mensagem) {
+    item.classList.remove("trabalhando");
+    item.classList.add("erro");
+    item.querySelector(".item-status").textContent = "Erro";
+    item.querySelector(".item-acoes").textContent = mensagem;
+}
+
+let filaDocumentos = Promise.resolve(); // um documento de cada vez, na ordem em que chegaram
+
+// --- Comprimir PDF ---
+const DICAS_NIVEL_PDF = {
+    alta: "Fotos e páginas escaneadas até 200 DPI: nítido até para imprimir. Economiza menos.",
+    equilibrado: "Até 150 DPI: ótimo na tela e bom impresso. Recomendado.",
+    forte: "Até 100 DPI: o menor arquivo, para caber em e-mail ou em formulários. Impressas, as fotos perdem detalhe.",
+};
+let nivelPdf = "equilibrado";
+const dicaPdf = document.getElementById("dica-pdf");
+escolherChip("#niveis-pdf", (d) => {
+    nivelPdf = d.nivel;
+    dicaPdf.textContent = DICAS_NIVEL_PDF[nivelPdf];
+});
+dicaPdf.textContent = DICAS_NIVEL_PDF[nivelPdf];
+
+prepararArea(document.getElementById("area-comprimir-pdf"), document.getElementById("arquivos-comprimir-pdf"), (arquivos) => {
+    const lote = document.createDocumentFragment();
+    arquivos.forEach((arquivo) => {
+        const item = criarItemFoto(arquivo.name);
+        lote.appendChild(item);
+        const nivel = nivelPdf;
+        filaDocumentos = filaDocumentos.then(() => comprimirUmPdf(arquivo, nivel, item));
+    });
+    document.getElementById("lista-comprimir-pdf").prepend(lote);
+});
+
+async function comprimirUmPdf(arquivo, nivel, item) {
+    const status = item.querySelector(".item-status");
+    const barra = item.querySelector(".barra-preenchida");
+    const acoes = item.querySelector(".item-acoes");
+    status.textContent = "Comprimindo...";
+    item.classList.add("trabalhando");
+    const formulario = new FormData();
+    formulario.append("arquivo", arquivo);
+    formulario.append("nivel", nivel);
+    const { ok, dados } = await enviarFormulario("/api/documentos/comprimir", formulario);
+    if (!ok) return marcarErroFoto(item, dados.erro || "Não foi possível comprimir.");
+    item.classList.remove("trabalhando");
+
+    const paginas = `${dados.paginas} ${dados.paginas === 1 ? "página" : "páginas"}`;
+    if (dados.ja_otimizado) {
+        status.textContent = "Já estava otimizado";
+        item.classList.add("otimizada");
+        barra.style.width = "100%";
+        acoes.textContent = `${formatarTamanho(dados.antes)} · ${paginas} · quase não tem fotos para diminuir; nada foi salvo.`;
+        return;
+    }
+    const economia = Math.round((1 - dados.depois / dados.antes) * 100);
+    item.classList.add("pronto");
+    status.textContent = `−${economia}%`;
+    barra.style.width = `${Math.max(2, 100 - economia)}%`;
+    mostrarSalvo(acoes, dados, `${formatarTamanho(dados.antes)} → ${formatarTamanho(dados.depois)} · ${paginas}`);
+}
+
+// --- Fotos -> PDF ---
+// As fotos escolhidas ficam numa lista (na ordem das páginas, dá para mudar)
+// até a pessoa clicar em "Criar PDF".
+const EXTENSOES_FOTO_PDF = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
+let tamanhoPaginaPdf = "a4";
+let fotosEscolhidas = []; // { arquivo, miniatura }
+const listaEscolhidas = document.getElementById("fotos-escolhidas");
+escolherChip("#paginas-fotos-pdf", (d) => (tamanhoPaginaPdf = d.tamanho));
+
+prepararArea(document.getElementById("area-fotos-pdf"), document.getElementById("arquivos-fotos-pdf"), (arquivos) => {
+    const fotos = arquivos.filter((a) => EXTENSOES_FOTO_PDF.includes(a.name.split(".").pop().toLowerCase()));
+    if (fotos.length < arquivos.length) alert("Só fotos JPG, PNG, WebP e HEIC entram no PDF. Os outros arquivos foram ignorados.");
+    // Em ordem de nome ("IMG_2" antes de "IMG_10"): é como as fotos de um documento costumam estar
+    fotos.sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { numeric: true }));
+    const comMiniatura = ["jpg", "jpeg", "png", "webp"]; // o navegador não mostra HEIC
+    fotosEscolhidas.push(...fotos.map((arquivo) => ({
+        arquivo,
+        miniatura: comMiniatura.includes(arquivo.name.split(".").pop().toLowerCase()) ? URL.createObjectURL(arquivo) : null,
+    })));
+    mostrarFotosEscolhidas();
+});
+
+function mostrarFotosEscolhidas() {
+    listaEscolhidas.innerHTML = "";
+    fotosEscolhidas.forEach((foto, posicao) => {
+        const linha = document.createElement("li");
+        linha.innerHTML = `
+            ${foto.miniatura ? "<img alt='' />" : "<span class='sem-miniatura'></span>"}
+            <span class="nome"></span>
+            <button type="button" class="item-botao" title="Subir" aria-label="Subir">↑</button>
+            <button type="button" class="item-botao" title="Descer" aria-label="Descer">↓</button>
+            <button type="button" class="item-botao remover" title="Tirar" aria-label="Tirar">✕</button>
+        `;
+        if (foto.miniatura) linha.querySelector("img").src = foto.miniatura;
+        linha.querySelector(".nome").textContent = foto.arquivo.name;
+        const [subir, descer, tirar] = linha.querySelectorAll("button");
+        subir.disabled = posicao === 0;
+        descer.disabled = posicao === fotosEscolhidas.length - 1;
+        subir.addEventListener("click", () => moverFoto(posicao, -1));
+        descer.addEventListener("click", () => moverFoto(posicao, 1));
+        tirar.addEventListener("click", () => {
+            const [tirada] = fotosEscolhidas.splice(posicao, 1);
+            if (tirada.miniatura) URL.revokeObjectURL(tirada.miniatura);
+            mostrarFotosEscolhidas();
+        });
+        listaEscolhidas.appendChild(linha);
+    });
+    const total = fotosEscolhidas.length;
+    document.getElementById("montagem-pdf").hidden = total === 0;
+    document.getElementById("contagem-fotos-pdf").textContent = `(${total} ${total === 1 ? "foto" : "fotos"})`;
+    document.getElementById("criar-pdf").textContent = `Criar PDF com ${total} ${total === 1 ? "página" : "páginas"}`;
+}
+
+function moverFoto(posicao, direcao) {
+    const [foto] = fotosEscolhidas.splice(posicao, 1);
+    fotosEscolhidas.splice(posicao + direcao, 0, foto);
+    mostrarFotosEscolhidas();
+}
+
+function limparFotosEscolhidas() {
+    fotosEscolhidas.forEach((foto) => foto.miniatura && URL.revokeObjectURL(foto.miniatura));
+    fotosEscolhidas = [];
+    document.getElementById("nome-pdf").value = "";
+    mostrarFotosEscolhidas();
+}
+document.getElementById("limpar-fotos-pdf").addEventListener("click", limparFotosEscolhidas);
+
+document.getElementById("criar-pdf").addEventListener("click", () => {
+    if (!fotosEscolhidas.length) return;
+    const nome = document.getElementById("nome-pdf").value.trim();
+    const formulario = new FormData();
+    fotosEscolhidas.forEach((foto) => formulario.append("arquivos", foto.arquivo));
+    formulario.append("tamanho", tamanhoPaginaPdf);
+    if (nome) formulario.append("nome", nome);
+    const total = fotosEscolhidas.length;
+    const item = criarItemFoto(`${nome || fotosEscolhidas[0].arquivo.name.replace(/\.[^.]+$/, "")}.pdf (${total} ${total === 1 ? "foto" : "fotos"})`);
+    document.getElementById("lista-fotos-pdf").prepend(item);
+    limparFotosEscolhidas();
+
+    filaDocumentos = filaDocumentos.then(async () => {
+        item.querySelector(".item-status").textContent = "Montando o PDF...";
+        item.classList.add("trabalhando");
+        const { ok, dados } = await enviarFormulario("/api/documentos/fotos-para-pdf", formulario);
+        if (!ok) return marcarErroFoto(item, dados.erro || "Não foi possível montar o PDF.");
+        item.classList.remove("trabalhando");
+        item.classList.add("pronto");
+        item.querySelector(".item-status").textContent = "Pronto";
+        item.querySelector(".barra-preenchida").style.width = "100%";
+        mostrarSalvo(item.querySelector(".item-acoes"), dados,
+            `${dados.arquivo} · ${dados.paginas} ${dados.paginas === 1 ? "página" : "páginas"} · ${formatarTamanho(dados.tamanho)} · em ${dados.pasta || "Downloads"}`);
+    });
+});
+
+// --- PDF -> imagens ---
+let formatoImagens = "jpg";
+let qualidadeImagens = "tela";
+escolherChip("#formatos-imagens", (d) => (formatoImagens = d.formato));
+escolherChip("#qualidades-imagens", (d) => (qualidadeImagens = d.qualidade));
+
+prepararArea(document.getElementById("area-pdf-imagens"), document.getElementById("arquivos-pdf-imagens"), (arquivos) => {
+    const lote = document.createDocumentFragment();
+    const paginas = document.getElementById("paginas-imagens").value.trim();
+    arquivos.forEach((arquivo) => {
+        const item = criarItemFoto(arquivo.name);
+        lote.appendChild(item);
+        const formulario = new FormData();
+        formulario.append("arquivo", arquivo);
+        formulario.append("formato", formatoImagens);
+        formulario.append("qualidade", qualidadeImagens);
+        formulario.append("paginas", paginas);
+        filaDocumentos = filaDocumentos.then(async () => {
+            item.querySelector(".item-status").textContent = "Transformando em imagens...";
+            item.classList.add("trabalhando");
+            const { ok, dados } = await enviarFormulario("/api/documentos/pdf-para-imagens", formulario);
+            if (!ok) return marcarErroFoto(item, dados.erro || "Não foi possível transformar em imagens.");
+            item.classList.remove("trabalhando");
+            item.classList.add("pronto");
+            item.querySelector(".item-status").textContent = "Pronto";
+            item.querySelector(".barra-preenchida").style.width = "100%";
+            mostrarSalvo(item.querySelector(".item-acoes"), dados,
+                `${dados.quantidade} ${dados.quantidade === 1 ? "imagem" : "imagens"} na pasta ${dados.pasta}`);
+        });
+    });
+    document.getElementById("lista-pdf-imagens").prepend(lote);
+});
+
+// ==========================================
 // FERRAMENTA 4: COMPRIMIR VÍDEO
 // ==========================================
 const campoVideos = document.getElementById("arquivos-video");
@@ -1321,7 +1695,7 @@ function atualizarResumoVideo() {
 // ==========================================
 const listaHistorico = document.getElementById("lista-historico");
 const historicoVazio = document.getElementById("historico-vazio");
-const ICONES_HISTORICO = { video: "▶", musica: "♪", foto: "▣", outro: "•" };
+const ICONES_HISTORICO = { video: "▶", musica: "♪", foto: "▣", documento: "▤", outro: "•" };
 let itensHistorico = [];
 let filtroHistorico = "todos";
 

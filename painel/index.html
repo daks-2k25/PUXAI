@@ -94,10 +94,6 @@
 
         <img class="logo" src="logo.webp" alt="Logo do Puxaí" />
         <span class="etiqueta">Puxaí · Vídeos, músicas e fotos</span>
-        <h1>Seus vídeos e músicas, <span>salvos em segundos.</span></h1>
-        <p class="subtitulo">
-          Vídeos do YouTube, TikTok, Instagram e de mais de mil sites em MP4 ou MP3, e fotos convertidas ou comprimidas, direto na sua pasta Downloads.
-        </p>
       </header>
 
       <!-- Aviso de versão nova (preenchido pelo script.js com /api/versao) -->
@@ -132,17 +128,61 @@
         <p id="atualizacao-mensagem" class="atualizacao-mensagem"></p>
       </div>
 
-      <!-- Abas -->
+      <!-- Abas: a barra lateral, com as seções em grupos (a descrição curta não aparece hoje) -->
       <nav class="abas">
-        <button class="aba ativa" data-aba="youtube">Vídeos</button>
-        <button class="aba" data-aba="heic">Converter foto</button>
-        <button class="aba" data-aba="comprimir">Comprimir foto</button>
-        <button class="aba" data-aba="comprimir-video">Comprimir vídeo</button>
-        <button class="aba" data-aba="meus-downloads">Meus downloads</button>
+        <span class="aba-grupo">Baixar</span>
+        <button class="aba ativa" data-aba="youtube">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span class="aba-nome">Vídeos</span>
+          <span class="aba-descricao">YouTube, TikTok, Instagram e +1000 sites</span>
+        </button>
+        <button class="aba" data-aba="fotos">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span class="aba-nome">Fotos</span>
+          <span class="aba-descricao">Instagram, Pinterest e links de imagens</span>
+        </button>
+        <span class="aba-grupo">Ferramentas</span>
+        <button class="aba" data-aba="heic">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+          <span class="aba-nome">Converter foto</span>
+          <span class="aba-descricao">HEIC para JPG, fotos para WebP</span>
+        </button>
+        <button class="aba" data-aba="comprimir">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 15 6 6m-6-6v4.8m0-4.8h4.8"/><path d="M9 19.8V15m0 0H4.2M9 15l-6 6"/><path d="M15 4.2V9m0 0h4.8M15 9l6-6"/><path d="M9 4.2V9m0 0H4.2M9 9 3 3"/></svg>
+          <span class="aba-nome">Comprimir foto</span>
+          <span class="aba-descricao">Menor arquivo, mesma qualidade</span>
+        </button>
+        <button class="aba" data-aba="comprimir-video">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>
+          <span class="aba-nome">Comprimir vídeo</span>
+          <span class="aba-descricao">Para WhatsApp, Discord ou e-mail</span>
+        </button>
+        <button class="aba" data-aba="documentos">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <span class="aba-nome">Documentos</span>
+          <span class="aba-descricao">PDF: comprimir, juntar fotos, imagens</span>
+        </button>
+        <span class="aba-grupo">Seus arquivos</span>
+        <button class="aba" data-aba="meus-downloads">
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          <span class="aba-nome">Meus downloads</span>
+          <span class="aba-descricao">Tudo o que o Puxaí salvou</span>
+        </button>
+        <span class="aba-grupo">Ajuda</span>
+        <!-- Só aparece se houver um formulário configurado (servicos/contato.py) -->
+        <button class="aba" data-aba="contato" hidden>
+          <svg class="aba-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>
+          <span class="aba-nome">Fale com a gente</span>
+          <span class="aba-descricao">Sugestões e problemas</span>
+        </button>
       </nav>
 
       <!-- Ferramenta 1: YouTube -->
       <section id="youtube" class="card">
+        <div class="secao-cabecalho">
+          <h2>Baixar vídeos e músicas</h2>
+          <p>Cole o link de um vídeo do YouTube, TikTok, Instagram, Pinterest ou de mais de mil sites e escolha MP4 ou MP3.</p>
+        </div>
         <form id="form-download">
           <!-- Aparece quando há um link de vídeo copiado (preenchido pelo script.js) -->
           <div id="link-copiado" class="link-copiado escondido">
@@ -264,8 +304,29 @@
         <ul id="lista-downloads"></ul>
       </section>
 
+      <!-- Baixar fotos: posts do Instagram, pins do Pinterest e links diretos de imagens (script.js) -->
+      <section id="fotos" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Baixar fotos</h2>
+          <p>Cole o link de um post do Instagram, de um pin do Pinterest ou o endereço de uma imagem (JPG, PNG, WebP, GIF, HEIC ou SVG). Pode colar vários, um por linha.</p>
+        </div>
+        <form id="form-imagens" class="form-imagens">
+          <textarea id="links-imagens" class="varios-links" rows="4" placeholder="Cole o link da foto..." aria-label="Links das fotos"></textarea>
+          <div class="linha-modo">
+            <span id="imagens-encontradas" class="links-encontrados"></span>
+          </div>
+          <button type="submit" id="baixar-imagens" class="botao" disabled>Baixar foto</button>
+        </form>
+        <p id="fila-retomada-fotos" class="status escondido"></p>
+        <ul id="lista-downloads-fotos"></ul>
+      </section>
+
       <!-- Ferramenta 2: Converter foto (HEIC -> JPG, HEIC/JPG/PNG -> WebP) -->
       <section id="heic" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Converter foto</h2>
+          <p>Fotos do iPhone (HEIC) viram JPG; HEIC, JPG e PNG viram WebP, bem mais leve.</p>
+        </div>
         <div class="grupo grupo-conversao" id="formatos-foto">
           <button type="button" class="chip ativo" data-formato="jpg">JPG</button>
           <button type="button" class="chip" data-formato="webp">WebP</button>
@@ -281,6 +342,10 @@
 
       <!-- Ferramenta 3: Comprimir foto (uma ou várias de uma vez) -->
       <section id="comprimir" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Comprimir foto</h2>
+          <p>O menor arquivo que continua visualmente igual. Nunca deixa a foto maior.</p>
+        </div>
         <div class="opcoes-compressao">
           <div>
             <p class="rotulo-opcao">Nível</p>
@@ -312,6 +377,10 @@
 
       <!-- Ferramenta 4: Comprimir vídeo (para caber num tamanho ou por qualidade) -->
       <section id="comprimir-video" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Comprimir vídeo</h2>
+          <p>Para caber no WhatsApp, Discord ou e-mail, ou só para ocupar menos espaço.</p>
+        </div>
         <div class="opcoes-compressao">
           <div>
             <p class="rotulo-opcao">Comprimir para</p>
@@ -361,13 +430,152 @@
       </section>
 
       <!-- Meus downloads: histórico do que o programa salvou (preenchido pelo script.js) -->
+      <!-- Ferramenta 5: Documentos (comprimir PDF, fotos -> PDF, PDF -> imagens), tudo no próprio computador -->
+      <section id="documentos" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Documentos</h2>
+          <p>PDFs e fotos de documentos, tudo no seu computador: nada é enviado para sites de fora.</p>
+        </div>
+        <div class="grupo modos-documento" id="modos-documento">
+          <button type="button" class="chip ativo" data-modo="comprimir">Comprimir PDF</button>
+          <button type="button" class="chip" data-modo="fotos">Fotos → PDF</button>
+          <button type="button" class="chip" data-modo="imagens">PDF → imagens</button>
+        </div>
+
+        <!-- Comprimir PDF -->
+        <div class="documento-modo" data-modo="comprimir">
+          <div class="opcoes-compressao">
+            <div>
+              <p class="rotulo-opcao">Nível</p>
+              <div class="grupo" id="niveis-pdf">
+                <button type="button" class="chip" data-nivel="alta">Alta qualidade</button>
+                <button type="button" class="chip ativo" data-nivel="equilibrado">Equilibrado</button>
+                <button type="button" class="chip" data-nivel="forte">Máxima compressão</button>
+              </div>
+            </div>
+            <p id="dica-pdf" class="dica-compressao"></p>
+          </div>
+          <label class="area-arquivo" id="area-comprimir-pdf">
+            <input id="arquivos-comprimir-pdf" type="file" accept=".pdf,application/pdf" multiple hidden />
+            <span class="icone">⬇</span>
+            <span>Clique ou arraste um ou vários <b>PDFs</b></span>
+          </label>
+          <ul id="lista-comprimir-pdf" class="lista-fotos"></ul>
+        </div>
+
+        <!-- Fotos -> PDF -->
+        <div class="documento-modo" data-modo="fotos" hidden>
+          <div class="opcoes-compressao">
+            <div>
+              <p class="rotulo-opcao">Tamanho da página</p>
+              <div class="grupo" id="paginas-fotos-pdf">
+                <button type="button" class="chip ativo" data-tamanho="a4">A4 (para imprimir)</button>
+                <button type="button" class="chip" data-tamanho="foto">Do tamanho da foto</button>
+              </div>
+            </div>
+            <p class="dica-compressao">Uma foto por página. Bom para juntar fotos de documentos (RG, comprovantes, contratos) num PDF só.</p>
+          </div>
+          <label class="area-arquivo" id="area-fotos-pdf">
+            <input id="arquivos-fotos-pdf" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif" multiple hidden />
+            <span class="icone">⬆</span>
+            <span>Clique ou arraste as fotos <b>.jpg</b>, <b>.png</b>, <b>.webp</b> ou <b>.heic</b></span>
+          </label>
+          <div id="montagem-pdf" class="montagem" hidden>
+            <p class="rotulo-opcao">Páginas do PDF, na ordem <span id="contagem-fotos-pdf" class="rotulo-detalhe"></span></p>
+            <ol id="fotos-escolhidas" class="fotos-escolhidas"></ol>
+            <div class="montagem-botoes">
+              <input id="nome-pdf" class="campo-texto" maxlength="100" placeholder="Nome do PDF (opcional)" aria-label="Nome do PDF" />
+              <button type="button" id="criar-pdf" class="botao-atualizar">Criar PDF</button>
+              <button type="button" id="limpar-fotos-pdf" class="botao-depois">Limpar</button>
+            </div>
+          </div>
+          <ul id="lista-fotos-pdf" class="lista-fotos"></ul>
+        </div>
+
+        <!-- PDF -> imagens -->
+        <div class="documento-modo" data-modo="imagens" hidden>
+          <div class="opcoes-compressao">
+            <div>
+              <p class="rotulo-opcao">Formato</p>
+              <div class="grupo" id="formatos-imagens">
+                <button type="button" class="chip ativo" data-formato="jpg">JPG</button>
+                <button type="button" class="chip" data-formato="png">PNG</button>
+              </div>
+            </div>
+            <div>
+              <p class="rotulo-opcao">Qualidade</p>
+              <div class="grupo" id="qualidades-imagens">
+                <button type="button" class="chip ativo" data-qualidade="tela">Para a tela</button>
+                <button type="button" class="chip" data-qualidade="impressao">Para imprimir</button>
+              </div>
+            </div>
+            <div>
+              <label class="rotulo-opcao" for="paginas-imagens">Páginas</label>
+              <input id="paginas-imagens" class="campo-texto" placeholder="Todas (ou, por exemplo: 1-3, 5)" />
+            </div>
+            <p class="dica-compressao">Cada página vira uma imagem, numa pasta com o nome do PDF.</p>
+          </div>
+          <label class="area-arquivo" id="area-pdf-imagens">
+            <input id="arquivos-pdf-imagens" type="file" accept=".pdf,application/pdf" multiple hidden />
+            <span class="icone">⬇</span>
+            <span>Clique ou arraste um ou vários <b>PDFs</b></span>
+          </label>
+          <ul id="lista-pdf-imagens" class="lista-fotos"></ul>
+        </div>
+      </section>
+
+      <!-- Fale com a gente: sugestões, problemas e outros assuntos (vão para um Google Forms) -->
+      <section id="contato" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Fale com a gente</h2>
+          <p>Uma ideia para o Puxaí ou algo que não funcionou? Conte aqui.</p>
+        </div>
+        <p class="contato-intro">Tem uma ideia para o Puxaí ou algo não funcionou? Conte aqui. Não precisa de conta em lugar nenhum.</p>
+        <div class="grupo" id="tipos-contato">
+          <button type="button" class="chip ativo" data-tipo="sugestao">💡 Sugestão</button>
+          <button type="button" class="chip" data-tipo="problema">🐞 Problema</button>
+          <button type="button" class="chip" data-tipo="outro">💬 Outro assunto</button>
+        </div>
+
+        <label class="rotulo-opcao contato-rotulo" for="contato-texto">Sua mensagem</label>
+        <textarea id="contato-texto" class="campo-area" rows="6" maxlength="5000"></textarea>
+
+        <label class="rotulo-opcao contato-rotulo" for="contato-contato">
+          Seu e-mail ou WhatsApp <span class="rotulo-detalhe">(opcional: só se quiser resposta)</span>
+        </label>
+        <input id="contato-contato" class="campo-texto" maxlength="200" autocomplete="email" />
+
+        <!-- Problema: o relatório técnico (o mesmo do "Relatar problema"), sem dados pessoais -->
+        <div id="contato-relatorio-bloco" class="contato-relatorio" hidden>
+          <label class="config-caixa">
+            <input type="checkbox" id="contato-incluir-relatorio" checked />
+            Enviar junto o relatório técnico (versões, sistema e erros, sem dados pessoais)
+          </label>
+          <details>
+            <summary>Ver e editar o relatório</summary>
+            <textarea id="contato-relatorio" class="campo-area relatorio-texto" rows="10" spellcheck="false"></textarea>
+          </details>
+        </div>
+
+        <div class="montagem-botoes contato-botoes">
+          <button type="button" id="contato-enviar" class="botao-atualizar">Enviar</button>
+        </div>
+        <p id="contato-resultado" class="dica-compressao" role="status"></p>
+        <p class="relatorio-dica">A mensagem vai para quem desenvolve o Puxaí, por um formulário do Google. Não escreva senhas nem dados pessoais desnecessários.</p>
+      </section>
+
       <section id="meus-downloads" class="card escondido">
+        <div class="secao-cabecalho">
+          <h2>Meus downloads</h2>
+          <p>Tudo o que o Puxaí salvou, do mais novo para o mais antigo.</p>
+        </div>
         <div class="historico-topo">
           <div class="grupo" id="filtros-historico">
             <button type="button" class="chip ativo" data-tipo="todos">Todos</button>
             <button type="button" class="chip" data-tipo="video">Vídeos</button>
             <button type="button" class="chip" data-tipo="musica">Músicas</button>
             <button type="button" class="chip" data-tipo="foto">Fotos</button>
+            <button type="button" class="chip" data-tipo="documento">Documentos</button>
           </div>
           <button type="button" id="limpar-historico" class="item-botao">Limpar lista</button>
         </div>

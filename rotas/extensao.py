@@ -4,6 +4,7 @@ São as únicas rotas que a extensão pode usar (veja seguranca.py): ver se o
 programa está aberto, pôr um link na fila e trazer o Puxaí para a frente.
 """
 import uuid
+from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, request
 
@@ -15,6 +16,8 @@ from servicos.janela import trazer_para_frente
 from servicos.sites import e_playlist_sem_video
 
 rotas = Blueprint("extensao", __name__)
+
+EXTENSOES_DE_VIDEO = (".mp4", ".webm", ".mov", ".m4v")
 
 
 @rotas.after_app_request
@@ -42,11 +45,12 @@ def estado_api():
 
 @rotas.route('/api/extensao/enviar', methods=['POST'])
 def enviar_api():
-    # {"url", "formato": "mp4"|"mp3", "qualidade": "720p", "titulo": "título da aba"}
+    # {"url", "formato": "mp4"|"mp3"|"imagem", "qualidade": "720p", "titulo": "título da aba",
+    #  "arquivo": true quando a url é o próprio arquivo de vídeo (botão direito no vídeo)}
     dados = request.get_json(silent=True) or {}
     url = str(dados.get("url") or "").strip()
     formato = dados.get("formato", "mp4")
-    if formato not in ("mp4", "mp3"):
+    if formato not in ("mp4", "mp3", "imagem"):
         return jsonify({"erro": "Formato inválido."}), 400
     try:
         qualidade = int(str(dados.get("qualidade", QUALIDADE_PADRAO)).lower().rstrip("p"))
@@ -55,11 +59,23 @@ def enviar_api():
     if qualidade not in QUALIDADES_PERMITIDAS:
         qualidade = QUALIDADE_PADRAO
 
+    arquivo = formato == "imagem" or (formato == "mp4" and dados.get("arquivo") is True)
+    if arquivo:
+        # O arquivo que a pessoa escolheu na página, de qualquer site (o endereço que o navegador mostra)
+        try:
+            partes = urlparse(url)
+        except ValueError:
+            partes = urlparse("")
+        valido = partes.scheme in ("http", "https") and bool(partes.hostname)
+        if formato == "mp4":
+            valido = valido and partes.path.lower().endswith(EXTENSOES_DE_VIDEO)
+        if not valido:
+            return jsonify({"erro": "Este arquivo não tem um endereço que o Puxaí consiga baixar."}), 400
+        link = {"url": url, "site": partes.hostname}
     # Só links que o Puxaí sabe baixar (o mesmo teste do aviso de link copiado)
-    link = area_de_transferencia.link_de_video(url)
-    if not link:
+    elif not (link := area_de_transferencia.link_de_video(url)):
         return jsonify({"erro": "O Puxaí não sabe baixar desta página."}), 400
-    if e_playlist_sem_video(link["url"]):
+    if not arquivo and e_playlist_sem_video(link["url"]):
         return jsonify({"erro": "É o link de uma playlist: cole ele no Puxaí para escolher os vídeos."}), 400
 
     id_download = str(uuid.uuid4())

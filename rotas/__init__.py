@@ -2,12 +2,14 @@
 
 - videos.py       baixar vídeos e músicas (YouTube, TikTok, Instagram e mais de mil sites)
 - fotos.py        converter e comprimir fotos
+- documentos.py   comprimir PDF, fotos -> PDF e PDF -> imagens
 - comprimir_video.py  comprimir vídeos do computador
 - arquivos.py     mostrar na pasta, abrir e "Meus downloads"
 - programa.py     janela ou navegador, preferências, encerrar
 - atualizacao.py  versão nova e botão "Atualizar agora"
 - extensao.py     a extensão do navegador ("Baixar com o Puxaí")
 - relatorio.py    relatório de erro ("Relatar problema")
+- contato.py      aba "Fale com a gente" (sugestões e problemas, para um Google Forms)
 """
 import os
 
@@ -15,7 +17,8 @@ from flask import Flask, Response
 
 from servicos import preferencias
 from servicos.caminhos import PASTA_PAINEL
-from rotas import arquivos, atualizacao, comprimir_video, extensao, fotos, programa, relatorio, videos
+from rotas import (arquivos, atualizacao, comprimir_video, contato, documentos, extensao, fotos, programa, relatorio,
+                   videos)
 from rotas.seguranca import proteger
 
 
@@ -35,6 +38,7 @@ def criar_app():
         ), 1)
         return Response(html, mimetype="text/html")
 
-    for modulo in (videos, fotos, comprimir_video, arquivos, programa, atualizacao, extensao, relatorio):
+    for modulo in (videos, fotos, documentos, comprimir_video, arquivos, programa, atualizacao, extensao, relatorio,
+                   contato):
         app.register_blueprint(modulo.rotas)
     return app

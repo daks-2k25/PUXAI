@@ -17,8 +17,8 @@ _trava = threading.Lock()
 # Os mais antigos saem da lista (o arquivo continua na pasta Downloads)
 LIMITE = 300
 
-# Extensão -> tipo mostrado no painel (filtros Vídeos / Músicas / Fotos)
-TIPOS = {"mp4": "video", "mp3": "musica", "jpg": "foto", "webp": "foto"}
+# Extensão -> tipo mostrado no painel (filtros Vídeos / Músicas / Fotos / Documentos)
+TIPOS = {"mp4": "video", "mp3": "musica", "jpg": "foto", "png": "foto", "webp": "foto", "pdf": "documento"}
 
 
 def _ler():

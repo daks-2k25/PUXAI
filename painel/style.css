@@ -167,12 +167,6 @@ h1 span {
     color: transparent;
 }
 
-.subtitulo {
-    max-width: 460px;
-    margin-top: 14px;
-    color: var(--texto-suave);
-    font-size: 15px;
-}
 
 /* ==========================================
    Sino de notificações
@@ -551,6 +545,11 @@ h1 span {
     transition: 0.2s;
 }
 
+/* Descrição curta de cada aba: guardada no HTML, não aparece no layout de hoje */
+.aba-descricao {
+    display: none;
+}
+
 .aba:hover {
     color: var(--texto);
 }
@@ -623,6 +622,10 @@ input[type="url"]:focus,
 
 .links-encontrados {
     color: var(--texto-suave);
+}
+
+.form-imagens .linha-modo {
+    margin-bottom: 14px;
 }
 
 /* ==========================================
@@ -1253,7 +1256,8 @@ input[type="url"]:focus,
 /* ==========================================
    Lista de downloads
    ========================================== */
-#lista-downloads {
+#lista-downloads,
+#lista-downloads-fotos {
     list-style: none;
     display: flex;
     flex-direction: column;
@@ -1261,7 +1265,8 @@ input[type="url"]:focus,
     margin-top: 18px;
 }
 
-#lista-downloads:empty {
+#lista-downloads:empty,
+#lista-downloads-fotos:empty {
     display: none;
 }
 
@@ -1411,6 +1416,170 @@ input[type="url"]:focus,
 /* ==========================================
    Comprimir foto
    ========================================== */
+/* ==========================================
+   Aba Documentos
+   ========================================== */
+.modos-documento {
+    margin-bottom: 20px;
+}
+
+.documento-modo[hidden],
+.montagem[hidden] {
+    display: none;
+}
+
+.campo-texto {
+    width: min(320px, 100%);
+    padding: 8px 10px;
+    border: 1px solid var(--borda-forte);
+    border-radius: 2px;
+    background: var(--campo);
+    color: var(--texto);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.campo-texto:focus {
+    border-color: var(--destaque);
+}
+
+.montagem {
+    margin-top: 16px;
+}
+
+.rotulo-detalhe {
+    color: var(--texto-suave);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;  /* o rótulo em volta é em maiúsculas; o detalhe, não */
+}
+
+/* Fale com a gente */
+.aba[hidden] {
+    display: none;
+}
+
+.contato-intro {
+    margin-bottom: 16px;
+    color: var(--texto-medio);
+    font-size: 15px;
+}
+
+.contato-rotulo {
+    display: block;
+    margin-top: 18px;
+}
+
+.campo-area {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--borda-forte);
+    border-radius: 2px;
+    background: var(--campo);
+    color: var(--texto);
+    font: inherit;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+}
+
+.campo-area:focus {
+    border-color: var(--destaque);
+}
+
+.campo-area.relatorio-texto {
+    margin-top: 8px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.contato-relatorio {
+    margin-top: 16px;
+}
+
+.contato-relatorio[hidden] {
+    display: none;
+}
+
+.contato-relatorio summary {
+    margin-top: 8px;
+    color: var(--destaque);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.contato-botoes {
+    margin-top: 18px;
+}
+
+/* Fotos -> PDF: as fotos escolhidas, na ordem das páginas */
+.fotos-escolhidas {
+    display: grid;
+    gap: 6px;
+    max-height: 340px;
+    margin: 0 0 12px;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+    counter-reset: pagina;
+}
+
+.fotos-escolhidas li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    background: var(--superficie);
+    counter-increment: pagina;
+}
+
+.fotos-escolhidas li::before {
+    content: counter(pagina);
+    min-width: 22px;
+    color: var(--texto-suave);
+    font-size: 13px;
+    text-align: right;
+}
+
+.fotos-escolhidas img,
+.fotos-escolhidas .sem-miniatura {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    background: var(--campo);
+    object-fit: cover;
+}
+
+.fotos-escolhidas .nome {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fotos-escolhidas .item-botao {
+    padding: 4px 8px;
+}
+
+.montagem-botoes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.montagem-botoes .campo-texto {
+    flex: 1 1 200px;
+}
+
 .opcoes-compressao {
     display: flex;
     flex-direction: column;
@@ -1638,4 +1807,271 @@ footer {
 
 .encerrado p {
     color: var(--texto-suave);
+}
+
+/* ==========================================
+   LAYOUT DO PAINEL (redesenho 2.5.0, a proposta "F" escolhida no seletor de layouts)
+   Vem por último de propósito: vale por cima das regras antigas do cabeçalho e das abas.
+   ========================================== */
+/* ==========================================
+   Partes gerais: cabeçalho compacto, ícones das abas e título das seções
+   ========================================== */
+:root {
+    --raio-cartao: 10px;
+}
+
+/* Cabeçalho vira uma barra: logo + nome à esquerda, botões à direita (sem o título grande) */
+header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+}
+
+.logo {
+    order: 1;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    border-radius: 9px;
+    box-shadow: 0 6px 16px rgba(232, 85, 31, 0.25);
+}
+
+.etiqueta {
+    order: 2;
+    margin: 0;
+    color: var(--texto);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+}
+
+.acoes-topo {
+    order: 3;
+    position: static;
+    margin-left: auto;
+}
+
+/* Título de cada seção */
+.secao-cabecalho {
+    display: block;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.secao-cabecalho h2 {
+    font-family: var(--serifa);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+
+.secao-cabecalho p {
+    margin-top: 6px;
+    color: var(--texto-suave);
+    font-size: 14px;
+}
+
+.aba-icone {
+    display: block;
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+/* "Ajuda" sem a aba "Fale com a gente" (formulário não configurado): o grupo some junto */
+.aba-grupo:has(+ .aba[hidden]) {
+    display: none !important;
+}
+
+main > section.card {
+    border-radius: var(--raio-cartao);
+}
+
+/* ==========================================
+   Barra lateral escura (altura total), com as seções agrupadas e a marca no topo
+   ========================================== */
+.brilho {
+    display: none;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 236px minmax(0, 1fr);
+    align-items: start;
+    max-width: none;
+    min-height: 100vh;
+    padding: 0;
+}
+
+.abas {
+    grid-column: 1;
+    grid-row: 1 / span 30;
+    position: sticky;
+    top: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 2px;
+    height: 100vh;
+    margin: 0;
+    padding: 22px 12px;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    background: #1d1613;
+    color: #f6ece4;
+}
+
+/* No tema escuro, a barra fica ainda mais escura que o fundo (senão as duas se misturam) */
+:root[data-tema="escuro"] .abas {
+    background: #0c0908;
+}
+
+/* A marca no topo da barra (a logo do cabeçalho fica escondida neste layout) */
+.abas::before {
+    content: "Puxaí";
+    display: block;
+    margin: 0 0 18px;
+    padding: 6px 10px 6px 50px;
+    background: url("logo.webp") no-repeat 10px center / 30px 30px;
+    font-family: var(--serifa);
+    font-size: 22px;
+    line-height: 30px;
+}
+
+.aba-grupo {
+    display: block;
+    padding: 14px 12px 6px;
+    color: rgba(246, 236, 228, 0.45);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.aba {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 7px;
+    color: rgba(246, 236, 228, 0.72);
+    font-size: 14px;
+    text-align: left;
+}
+
+.aba:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.aba.ativa {
+    background: rgba(232, 85, 31, 0.18);
+    color: #ffb48a;
+    font-weight: 600;
+}
+
+.aba.ativa .aba-icone {
+    color: #ff8a4c;
+}
+
+header {
+    grid-column: 2;
+    margin: 0;
+    padding: 18px 36px 0;
+    border: none;
+}
+
+header .logo,
+header .etiqueta {
+    display: none;
+}
+
+.atualizacao,
+main > section.card,
+footer {
+    grid-column: 2;
+    width: min(880px, calc(100% - 72px));
+    margin-right: auto;
+    margin-left: 36px;
+}
+
+.atualizacao {
+    margin-top: 6px;
+}
+
+main > section.card {
+    margin-top: 6px;
+    padding: 30px;
+    border: 1px solid var(--borda);
+    background: var(--cartao);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+footer {
+    margin-top: 18px;
+    padding-bottom: 32px;
+}
+
+/* Janela do aplicativo (760 px): barra mais estreita */
+@media (max-width: 1000px) {
+    .container {
+        grid-template-columns: 196px minmax(0, 1fr);
+    }
+
+    header {
+        padding: 16px 20px 0;
+    }
+
+    .atualizacao,
+    main > section.card,
+    footer {
+        width: calc(100% - 40px);
+        margin-left: 20px;
+    }
+
+    main > section.card {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 680px) {
+    .container {
+        display: block;
+    }
+
+    .abas {
+        position: static;
+        flex-direction: row;
+        height: auto;
+        padding: 10px;
+        overflow-x: auto;
+    }
+
+    .abas::before,
+    .aba-grupo {
+        display: none;
+    }
+
+    .aba {
+        width: auto;
+        white-space: nowrap;
+    }
+
+    header .logo,
+    header .etiqueta {
+        display: block;
+    }
+
+    /* Nome numa linha só: o que não couber vira "…" */
+    header .etiqueta {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }

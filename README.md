@@ -71,6 +71,7 @@ Com a extensão, não precisa copiar e colar o link: num vídeo aberto no navega
 
 - **Botão da extensão** (na barra do navegador): mostra o vídeo da aba, com **Baixar MP4** (e a qualidade) e **Baixar MP3**.
 - **Botão direito** num link, num vídeo ou na página: **Baixar vídeo com o Puxaí (MP4)** ou **Baixar MP3 com o Puxaí**.
+- **Imagens e arquivos de vídeo:** botão direito numa imagem → **Baixar imagem com o Puxaí**; num vídeo → **Baixar este arquivo de vídeo com o Puxaí** (arquivos .mp4, .webm, .mov e .m4v). Útil para guardar referências de sites como o Dribbble. Se o site cobrir a mídia com outra camada, a opção pode não aparecer.
 - **Atalhos:** **Alt+Shift+P** (MP4) e **Alt+Shift+M** (MP3) baixam o vídeo da aba aberta. Dá para trocar em `chrome://extensions/shortcuts`.
 - Uma notificação confirma que entrou na fila, e o download aparece sozinho na lista do Puxaí. O arquivo vai para a pasta escolhida no Puxaí.
 
@@ -107,6 +108,7 @@ Com a extensão, não precisa copiar e colar o link: num vídeo aberto no navega
 - **Conversão de fotos**: HEIC para JPG, e HEIC, JPG ou PNG para WebP (bem menor, mantém a transparência do PNG), salvo direto em Downloads
 - **Compressor de fotos**: JPG, PNG, WebP e HEIC, uma ou várias de uma vez. Testa algumas qualidades em cada foto e fica com o menor arquivo que continua visualmente igual (medido pelo SSIM), em três níveis. Nunca deixa o arquivo maior, corrige a orientação das fotos de celular, remove a localização (GPS) e pode reduzir o tamanho (2560, 1920 ou 1280 px)
 - **Compressor de vídeos**: MP4, MOV, MKV, WebM, AVI e outros viram MP4 (H.264), que abre em qualquer lugar. Para **caber num tamanho** (WhatsApp 16 MB, Discord 10 MB, E-mail 25 MB ou outro), em duas passadas e reduzindo a resolução sozinho quando o vídeo é longo; ou por **qualidade** (alta, equilibrada ou máxima compressão). Resolução máxima opcional (1080p, 720p, 480p), andamento em %, cancelar no meio e vídeos de celular continuam em pé. Nunca deixa o arquivo maior
+- **Documentos (PDF)**, tudo no próprio computador, sem enviar os arquivos para sites de fora: **comprimir PDF** (as fotos e páginas escaneadas de dentro dele, em três níveis; nunca deixa o arquivo maior), **fotos → PDF** (várias fotos num PDF só, na ordem escolhida, em página A4 ou do tamanho da foto) e **PDF → imagens** (cada página vira JPG ou PNG, todas ou só algumas)
 - **Meus downloads**: lista do que o programa já salvou (vídeos, músicas e fotos), com filtros, **Abrir** e **Mostrar na pasta**, mesmo depois de fechar e abrir o programa
 - **Programa pronto para Windows e Linux**, que não precisa de Python instalado e mantém o yt-dlp atualizado sozinho
 
@@ -120,6 +122,10 @@ Com a extensão, não precisa copiar e colar o link: num vídeo aberto no navega
 - **Converter foto:** escolha **JPG** (a partir de HEIC) ou **WebP** (a partir de HEIC, JPG ou PNG), depois arraste uma ou várias fotos (ou clique para escolher). Elas são convertidas uma de cada vez, cada uma aparece na lista com o resultado, e as convertidas vão para a pasta Downloads. Se uma foto não for aceita (ex.: PNG para JPG), só ela mostra o erro e as outras continuam.
 - **Comprimir foto:** escolha o nível (**Alta qualidade**, **Equilibrado** ou **Máxima compressão**) e, se quiser, um tamanho máximo, e arraste uma ou várias fotos. Cada foto aparece com o tamanho antes e depois, e a versão comprimida vai para Downloads com "(comprimida)" no nome. JPG, PNG e WebP continuam no mesmo formato; HEIC vira JPG. Se a foto já estiver bem comprimida, nada é salvo.
 - **Comprimir vídeo:** escolha **Caber num tamanho** (WhatsApp, Discord, E-mail ou **Outro**, em MB) ou **Escolher a qualidade**, e, se quiser, uma resolução máxima. Arraste um ou vários vídeos: eles são comprimidos um de cada vez, com o andamento em % e o botão **✕ Cancelar**. O vídeo comprimido vai para a pasta de vídeos com "(comprimido)" no nome. Leva mais ou menos metade do tempo do vídeo (um vídeo de 3 minutos em 1080p fica pronto em cerca de 1 minuto para o WhatsApp). Se o vídeo já couber no tamanho, ou já estiver bem comprimido (como os baixados do YouTube), nada é salvo. Se for longo demais para o tamanho escolhido, o programa avisa.
+- **Documentos:** escolha o que fazer no topo da aba.
+  - **Comprimir PDF:** escolha o nível e arraste um ou vários PDFs. O que pesa num PDF são as fotos e as páginas escaneadas: elas são recomprimidas e, se forem maiores que o necessário, reduzidas (**Alta qualidade**: até 200 DPI, nítido até para imprimir; **Equilibrado**: 150 DPI; **Máxima compressão**: 100 DPI, para caber em e-mail ou formulários). Texto, fontes e links ficam intactos. O PDF comprimido vai para a pasta de fotos com "(comprimido)" no nome. PDF que é só texto quase não diminui: nesse caso nada é salvo. PDF com senha para abrir não dá para comprimir (o Puxaí avisa).
+  - **Fotos → PDF:** arraste as fotos (JPG, PNG, WebP ou HEIC). Elas entram em ordem de nome e dá para mudar com **↑** e **↓** (ou tirar com **✕**). Escolha **A4** (com margem, em pé ou deitada conforme a foto; bom para imprimir e mandar documentos) ou **Do tamanho da foto**, dê um nome (opcional) e clique em **Criar PDF**. As fotos ficam em pé (as de celular), sem a localização (GPS) e com fundo branco onde eram transparentes.
+  - **PDF → imagens:** escolha **JPG** ou **PNG**, **Para a tela** (110 DPI) ou **Para imprimir** (300 DPI) e, se quiser, as páginas (ex.: `1-3, 5`; vazio = todas). Cada página vira uma imagem ("Página 01.jpg"...) numa pasta com o nome do PDF, por exemplo `Contrato (páginas)`.
 - **Meus downloads:** mostra tudo o que o programa salvou, do mais novo para o mais antigo, com data e tamanho. Filtre por **Vídeos**, **Músicas** ou **Fotos**, e use **Abrir** (abre no player ou visualizador do Windows) ou **Mostrar na pasta**. **Remover da lista** e **Limpar lista** só tiram da lista: os arquivos continuam na pasta Downloads. Se um arquivo foi apagado ou movido, ele aparece riscado.
 - **Atualizar:** quando sair uma versão nova, aparece uma notificação no canto da janela, um aviso no topo e uma bolinha no sino 🔔. Clique em **Atualizar agora**: o programa baixa a versão nova, reinicia sozinho e continua com seus arquivos e configurações. Com o programa aberto, ele confere se saiu versão nova a cada 30 minutos. A versão instalada aparece no rodapé.
 - **Depois:** se preferir atualizar mais tarde, clique em **Depois**. A notificação não volta para essa versão (o sino continua com a bolinha, e a atualização fica disponível nele). Se sair uma versão ainda mais nova, o programa avisa de novo.
@@ -157,7 +163,7 @@ Vídeos **públicos** baixam sem login. Alguns sites (ou posts) só abrem com um
 
 O programa passa a usar esse login automaticamente, em todos os sites (dá para exportar os cookies de vários sites no mesmo arquivo). O `cookies.txt` dá acesso às suas contas: não compartilhe esse arquivo. Ele não vai para o Git e o botão de atualizar não mexe nele.
 
-> O yt-dlp não consegue ler os cookies do Chrome direto no Windows (o Chrome protege esses dados), por isso o caminho é exportar o arquivo. No Instagram, os vídeos são baixados; fotos de posts não.
+> O yt-dlp não consegue ler os cookies do Chrome direto no Windows (o Chrome protege esses dados), por isso o caminho é exportar o arquivo. No **Pinterest**, pins de vídeo baixam como qualquer vídeo e pins de foto salvam a imagem original (no formato em que foi enviada: JPG, PNG, GIF ou WebP), inclusive pelos links curtos `pin.it/...` do botão Compartilhar do app. No Instagram, posts de foto e carrosséis de fotos também funcionam: o Puxaí salva as fotos em tamanho original (JPG) na pasta de fotos, e a prévia avisa ("📷 Foto" ou "📷 4 fotos"). Num carrossel com fotos e vídeos misturados, só as fotos são salvas.
 
 ### Como a atualização funciona
 
@@ -169,11 +175,7 @@ O programa passa a usar esse login automaticamente, em todos os sites (dá para 
 
 Para saber quantas pessoas usam o Puxaí e quais sites mais falham (e o que consertar primeiro), o programa pode enviar estatísticas anônimas para o [Aptabase](https://aptabase.com), um serviço de estatísticas para aplicativos focado em privacidade: ele não guarda o IP nem identifica ninguém (cada abertura do programa vira um código aleatório). Grátis até 20 mil eventos por mês.
 
-**Hoje está desligado:** sem a chave, o painel nem pergunta e nada é enviado. Para ligar:
-
-1. Crie uma conta em [aptabase.com](https://aptabase.com) e um app chamado **Puxaí** (região **EU**).
-2. Copie a chave do app (começa com `A-EU-`) para `CHAVE_APP` em `servicos/estatisticas.py`.
-3. Publique uma versão nova. Na primeira vez que cada pessoa abrir o Puxaí, aparece o aviso **"Ajude a melhorar o Puxaí?"**, com **Sim, pode enviar** e **Não, obrigado**.
+**Ligado a partir da versão 2.5.0**, com a chave do app (`CHAVE_APP`, em `servicos/estatisticas.py`; é pública por natureza: só permite enviar eventos, não ler). Na primeira vez que cada pessoa abrir o Puxaí, aparece o aviso **"Ajude a melhorar o Puxaí?"**, com **Sim, pode enviar** e **Não, obrigado**. Os números aparecem no painel do Aptabase (modo **Release**; os testes ficam em **Debug**: rode o Puxaí com `PUXAI_DEBUG=1` para os seus envios caírem lá). Para desligar para todo mundo, deixe `CHAVE_APP = ""`: o painel nem pergunta e nada é enviado.
 
 **O que é enviado, e só se a pessoa aceitar:**
 
@@ -183,6 +185,17 @@ Para saber quantas pessoas usam o Puxaí e quais sites mais falham (e o que cons
 | Ao terminar um download | o site (ex.: YouTube), MP4 ou MP3 e a qualidade, se deu certo, deu erro (com a mensagem fixa do Puxaí, ex.: "Esse vídeo não está disponível") ou foi cancelado, se veio da extensão, se era um trecho e se voltou de quando o programa fechou |
 
 **Nunca:** links, títulos, nomes de arquivos, pastas, nome de usuário ou qualquer coisa que identifique a pessoa. Se o envio falhar (sem internet...), nada acontece: o programa segue normal. A resposta fica em `.preferencias.json` (`"estatisticas": true` ou `false`).
+
+## Fale com a gente (sugestões e problemas)
+
+A aba **Fale com a gente** recebe sugestões, problemas e outros assuntos de quem usa o Puxaí, **sem precisar de conta em lugar nenhum**: a pessoa escolhe **💡 Sugestão**, **🐞 Problema** ou **💬 Outro assunto**, escreve e, se quiser resposta, deixa um e-mail ou WhatsApp. Em **Problema**, vai junto o relatório técnico do **⚠ Relatar problema** (sem dados pessoais; dá para ver, editar ou desmarcar). O botão **⚠ Relatar problema** dos downloads com erro passa a abrir esta aba, já com o relatório daquele download.
+
+As mensagens vão para um **Google Forms** e chegam numa planilha do Google (com aviso por e-mail). O Puxaí envia as respostas direto, como se a pessoa tivesse preenchido o formulário. **Sem o formulário configurado, a aba nem aparece** (e o **⚠ Relatar problema** usa a janela antiga, com GitHub e Copiar). Para configurar:
+
+1. Crie um formulário com 5 perguntas, nesta ordem e nenhuma obrigatória: **Tipo** (resposta curta), **Mensagem** (parágrafo), **Contato** (resposta curta), **Relatório técnico** (parágrafo) e **Versão do Puxaí** (resposta curta).
+2. Em **Configurações → Respostas**, deixe **Coletar endereços de e-mail** em *Não coletar* e **Limitar a 1 resposta** desligado (os dois exigem login no Google, e aí o Puxaí não consegue enviar).
+3. Em **⋮ → Gerar link pré-preenchido**, escreva qualquer coisa em cada pergunta e copie o link: ele tem o código de cada pergunta (`entry.123...`).
+4. Em `servicos/contato.py`, ponha o link do formulário em `FORMULARIO` e os códigos em `CAMPOS`.
 
 ## Publicando uma versão nova
 
@@ -211,11 +224,13 @@ API-BAIXAR-YOUTUBE/
 │   ├── seguranca.py     # Só o painel pode usar a API (bloqueia pedidos de outros sites)
 │   ├── videos.py        # Baixar, prévia, qualidades, progresso e cancelar
 │   ├── fotos.py         # Converter e comprimir fotos
+│   ├── documentos.py    # Comprimir PDF, fotos -> PDF e PDF -> imagens
 │   ├── arquivos.py      # Mostrar na pasta, abrir e "Meus downloads"
 │   ├── programa.py      # Janela ou navegador, preferências, encerrar
 │   ├── atualizacao.py   # Versão nova e "Atualizar agora"
 │   ├── extensao.py      # As rotas que a extensão do navegador pode usar
 │   ├── relatorio.py     # "Relatar problema": montar o relatório e abrir o GitHub ou o e-mail
+│   ├── contato.py       # Aba "Fale com a gente": enviar sugestões e problemas
 │   └── utilidades.py    # O que as rotas compartilham (arquivos enviados, salvar em Downloads)
 ├── servicos/            # O que o programa faz (as rotas só chamam estes arquivos)
 │   ├── programa.py      # Porta, uma instância só, reiniciar, encerrar e estado da janela
@@ -226,6 +241,7 @@ API-BAIXAR-YOUTUBE/
 │   ├── bandeja_linux.py # O mesmo ícone no Linux, com o Qt (que já vem junto para a janela)
 │   ├── relatorio.py     # Relatório de erro sem dados pessoais (e o e-mail de suporte, EMAIL_SUPORTE)
 │   ├── estatisticas.py  # Estatísticas anônimas, só com permissão (e a chave do Aptabase, CHAVE_APP)
+│   ├── contato.py       # Aba "Fale com a gente": envia para o Google Forms (FORMULARIO e CAMPOS)
 │   ├── area_de_transferencia.py # Link de vídeo copiado (o painel oferece "Colar")
 │   ├── caminhos.py      # Pastas do projeto e pasta Downloads do usuário
 │   ├── preferencias.py  # Preferências salvas (.preferencias.json): modo de abertura, pastas, atualização adiada
@@ -239,7 +255,8 @@ API-BAIXAR-YOUTUBE/
 │   ├── downloader.py    # Fila de downloads, corte de trecho e cancelamento (yt-dlp)
 │   ├── informacoes.py   # Prévia do vídeo (título, canal, duração, miniatura)
 │   ├── sites.py         # O que é comum aos sites (nomes, títulos, login, mensagens de erro)
-│   └── conversor.py     # Conversão de fotos: HEIC -> JPG e HEIC/JPG/PNG -> WebP (FFmpeg)
+│   ├── conversor.py     # Conversão de fotos: HEIC -> JPG e HEIC/JPG/PNG -> WebP (FFmpeg)
+│   └── documentos.py    # Aba Documentos: PDF com o pypdf e o PDFium (pypdfium2) + FFmpeg
 ├── logos/               # Identidade visual: logo e ícones em SVG, PNG e WebP
 ├── ferramentas/
 │   ├── iniciar.ps1      # Usado pelo iniciar.bat: instala o que faltar, cria o atalho e abre o programa
@@ -397,11 +414,15 @@ Lista as resoluções aceitas.
 
 ### `GET /api/extensao/estado`, `POST /api/extensao/enviar` e `POST /api/extensao/abrir`
 
-As únicas rotas que a extensão do navegador pode usar (pedidos com `Origin: chrome-extension://...` ou `moz-extension://...`; em qualquer outra rota, eles recebem `403`). `estado` responde `{"puxai": true, "versao", "qualidades", "padrao"}`. `enviar` recebe `{"url", "formato": "mp4"|"mp3", "qualidade": "720p", "titulo"}`, confere se o yt-dlp sabe baixar daquele link e põe na fila: `202` com `{"id", "site", "formato", "qualidade"}`, ou `400` com o motivo (página que não é de vídeo, link de playlist). `abrir` traz a janela do Puxaí para a frente (ou abre o painel).
+As únicas rotas que a extensão do navegador pode usar (pedidos com `Origin: chrome-extension://...` ou `moz-extension://...`; em qualquer outra rota, eles recebem `403`). `estado` responde `{"puxai": true, "versao", "qualidades", "padrao"}`. `enviar` recebe `{"url", "formato": "mp4"|"mp3"|"imagem", "qualidade": "720p", "titulo", "arquivo"}`, confere se o yt-dlp sabe baixar daquele link (para `imagem`, ou `mp4` com `"arquivo": true`, a url é o próprio arquivo, de qualquer site; o vídeo precisa terminar em .mp4, .webm, .mov ou .m4v) e põe na fila: `202` com `{"id", "site", "formato", "qualidade"}`, ou `400` com o motivo (página que não é de vídeo, link de playlist). `abrir` traz a janela do Puxaí para a frente (ou abre o painel).
 
 ### `POST /api/relatorio` e `POST /api/relatorio/enviar`
 
 `POST /api/relatorio` com `{"id": "<download>"}` (opcional) monta o relatório de erro, já sem dados pessoais: `{"titulo", "texto", "email": true|false}` (`email`: se há um e-mail de suporte configurado). `POST /api/relatorio/enviar` com `{"destino": "github"|"email", "titulo", "descricao", "texto"}` abre o novo *Issue* do GitHub no navegador (ou o programa de e-mail) com o relatório preenchido. Se o texto for grande demais para caber no endereço, o fim é cortado (avisando no próprio relatório).
+
+### `GET /api/contato` e `POST /api/contato`
+
+`GET` responde `{"disponivel": true|false, "tipos"}` (se há um formulário configurado). `POST` com `{"tipo": "sugestao"|"problema"|"outro", "mensagem", "contato", "relatorio"}` (os dois últimos opcionais) envia a mensagem para o formulário: `{"ok": true}`, `400` (mensagem vazia, tipo inválido), `404` (sem formulário configurado) ou `502` (sem internet, formulário fora do ar).
 
 ### `GET /api/fila`
 
@@ -504,6 +525,14 @@ Responde `202` com `{"id": "...", "status": "Na fila..."}`. Acompanhe por `GET /
 curl -X POST http://127.0.0.1:5000/api/comprimir-video \
   -F "arquivo=@video.mov" -F "modo=tamanho" -F "tamanho=whatsapp"
 ```
+
+### `POST /api/documentos/comprimir`, `POST /api/documentos/fotos-para-pdf` e `POST /api/documentos/pdf-para-imagens`
+
+Recebem os arquivos como `multipart/form-data` e salvam o resultado na pasta de fotos escolhida em Configurações. Respondem um JSON (com `id`, para `POST /api/mostrar/<id>`), ou `400` com `{"erro"}` (PDF com senha, página que não existe...).
+
+- **comprimir:** campo `arquivo` (PDF) e `nivel` (`alta`, `equilibrado` ou `forte`). Resposta: `{"id", "antes", "depois", "paginas", "imagens", "ja_otimizado", "arquivo", "pasta"}`; com `ja_otimizado: true`, nada é salvo.
+- **fotos-para-pdf:** campo `arquivos` repetido (as fotos, na ordem das páginas, até 200), `tamanho` (`a4` ou `foto`) e `nome` (opcional; sem ele, o nome da primeira foto). Resposta: `{"id", "paginas", "tamanho", "arquivo", "pasta"}`.
+- **pdf-para-imagens:** campo `arquivo` (PDF), `formato` (`jpg` ou `png`), `qualidade` (`tela`: 110 DPI, ou `impressao`: 300 DPI) e `paginas` (ex.: `1-3, 5`; vazio = todas, até 500). Resposta: `{"id", "quantidade", "arquivo", "pasta"}` (`pasta`: a pasta criada para as imagens).
 
 ### `GET /api/historico`
 

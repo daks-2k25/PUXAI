@@ -1,6 +1,6 @@
 [project]
 name = "puxai"
-version = "2.4.1"
+version = "2.5.0"
 description = "Baixa vídeos do YouTube em MP4/MP3 e converte fotos para JPG e WebP, com painel próprio (Windows e Linux)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,8 +16,17 @@ dependencies = [
     "pywebview[qt]; sys_platform == 'linux'",
     # Linux: o Deno vem junto pelo pip (no Windows, o iniciar.bat instala pelo winget)
     "yt-dlp[deno]; sys_platform == 'linux'",
+    # Aba Documentos: o PDFium (o motor de PDF do Chrome) desenha as páginas e monta
+    # PDFs; o pypdf (Python puro) troca as imagens de dentro do PDF ao comprimir
+    "pypdfium2",
+    "pypdf",
 ]
 
 [tool.uv]
 # É um aplicativo, não uma biblioteca: o uv só instala as dependências
 package = false
+
+[dependency-groups]
+mcp = [
+    "mcp>=2.3",
+]

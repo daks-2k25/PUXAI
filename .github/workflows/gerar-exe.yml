@@ -99,7 +99,7 @@ jobs:
             "",
             "## Extensão do navegador (opcional)",
             "",
-            "Com a extensão **Baixar com o Puxaí**, um clique no botão dela (ou no botão direito de um link) manda o vídeo para o Puxaí. Funciona no Chrome, Edge, Brave, Opera e Firefox, com o Puxaí aberto.",
+            "Com a extensão **Baixar com o Puxaí**, um clique no botão dela (ou no botão direito de um link) manda o vídeo para o Puxaí; no botão direito de uma imagem ou de um vídeo, manda o próprio arquivo. Funciona no Chrome, Edge, Brave, Opera e Firefox, com o Puxaí aberto.",
             "",
             "1. **[Baixe a extensão]($env:LINK_EXTENSAO)** e extraia numa pasta que não vá apagar.",
             "2. No Chrome/Edge/Brave/Opera: abra ``chrome://extensions``, ligue o **Modo do desenvolvedor** e clique em **Carregar sem compactação**, escolhendo essa pasta.",

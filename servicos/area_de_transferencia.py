@@ -99,6 +99,8 @@ def _site_do_link(url):
     global _extratores
     if url in _cache:
         return _cache[url]
+    if re.match(r"https?://(www\.)?pin\.it/", url, re.IGNORECASE):
+        return "Pinterest"  # link curto do app do Pinterest (o yt-dlp só entende o link do pin)
     if _extratores is None:
         from yt_dlp.extractor import gen_extractor_classes
         # "Generic" aceita qualquer link: não diz nada sobre ser um site de vídeo

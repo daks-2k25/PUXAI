@@ -1,13 +1,16 @@
 {
-  "versao": "2.4.1",
+  "versao": "2.5.0",
   "novidades": [
-    "Programa pronto para Linux da versão 2.4 (na 2.4.0 ele não saiu)",
-    "Atualização automática também no programa pronto (Windows e Linux): é só clicar em Atualizar agora",
-    "Fila que não se perde: se o programa fechar no meio, os downloads voltam sozinhos e continuam de onde pararam",
-    "Extensão do navegador Baixar com o Puxaí (Chrome, Edge, Brave, Opera e Firefox): manda o vídeo da página para o Puxaí com um clique",
-    "No Linux, o ícone do Puxaí perto do relógio, igual ao do Windows",
-    "Relatar problema com um clique: o relatório sai sem dados pessoais e você confere antes de enviar",
-    "O registro de erros (Puxai.log) não perde mais as últimas mensagens quando o programa fecha",
-    "Na versão 2.3.0 ou anterior, baixe esta versão pelo link uma última vez; daí em diante, atualiza sozinho"
+    "Visual novo: barra lateral com as ferramentas organizadas em seções (Baixar, Ferramentas, Seus arquivos e Ajuda)",
+    "Nova aba Fotos, separada dos vídeos: cole um ou vários links de posts do Instagram, pins do Pinterest ou imagens (JPG, PNG, WebP, GIF, HEIC ou SVG), inclusive links do Google Imagens",
+    "Nova aba Documentos: comprimir PDF, juntar fotos num PDF e transformar PDF em imagens, tudo no seu computador",
+    "Instagram: posts de foto e carrosséis de fotos agora são baixados, na melhor qualidade disponível",
+    "Pinterest: pins de foto (na imagem original) e de vídeo, inclusive pelos links curtos pin.it do app",
+    "Prévia do Instagram mostra quando o post é de foto (e quantas fotos tem)",
+    "Extensão do navegador: botão direito numa imagem ou num vídeo para mandar o arquivo ao Puxaí (baixe a extensão de novo e recarregue no navegador)",
+    "Nova aba Fale com a gente: mande sugestões e problemas direto do Puxaí, sem precisar de conta",
+    "Estatísticas anônimas (opcional): o Puxaí pergunta uma vez se pode enviar quais sites você usa e quais deram erro, sem links nem nada que identifique você",
+    "Correção no Windows: downloads do TikTok, do Instagram e de outros sites falhavam quando o caminho da pasta do programa tinha acento (por exemplo, por causa do nome de usuário)",
+    "Correção: link direto de imagem colado na aba Vídeos agora é salvo como foto (antes podia virar um arquivo .mp4)"
   ]
 }

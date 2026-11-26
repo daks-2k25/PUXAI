@@ -66,6 +66,16 @@ try {
     $resposta = & curl.exe -s -F "arquivo=@$imagem" -F "nivel=forte" "$endereco/api/comprimir"
     Conferir "comprimir foto (usa o ffprobe)" ($LASTEXITCODE -eq 0 -and $resposta.Length -gt 0)
 
+    # Documentos: a foto vira PDF (prova que o PDFium veio junto), o PDF vira imagem e é comprimido
+    $pdf = & curl.exe -s -F "arquivos=@$imagem" -F "tamanho=a4" -F "nome=teste-puxai" "$endereco/api/documentos/fotos-para-pdf" | ConvertFrom-Json
+    Conferir "foto vira PDF (PDFium incluído)" ($pdf.paginas -eq 1) "($($pdf.arquivo))"
+    $arquivoPdf = Join-Path $copia "teste.pdf"
+    & curl.exe -s -o $arquivoPdf "$endereco/api/arquivo/$($pdf.id)"
+    $imagens = & curl.exe -s -F "arquivo=@$arquivoPdf" -F "formato=jpg" "$endereco/api/documentos/pdf-para-imagens" | ConvertFrom-Json
+    Conferir "PDF vira imagem" ($imagens.quantidade -eq 1) "($($imagens.pasta))"
+    $codigo = & curl.exe -s -o NUL -w "%{http_code}" -F "arquivo=@$arquivoPdf" "$endereco/api/documentos/comprimir"
+    Conferir "comprimir PDF (pypdf incluído)" ($codigo -eq "200") "(HTTP $codigo)"
+
     # Segurança: um pedido "de outro site" tem que ser recusado
     $codigo = & curl.exe -s -o NUL -w "%{http_code}" -H "Origin: https://site-ruim.com" -H "Sec-Fetch-Site: cross-site" "$endereco/api/qualidades"
     Conferir "pedido de outro site recusado" ($codigo -eq "403") "(HTTP $codigo)"

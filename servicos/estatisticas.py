@@ -32,7 +32,7 @@ from datetime import datetime, timezone
 from servicos import preferencias
 
 # Chave do app no Aptabase (ex.: "A-EU-1234567890"). Vazia: estatísticas desligadas.
-CHAVE_APP = ""
+CHAVE_APP = "A-US-3073342861"
 VERSAO_DO_ENVIO = "puxai-python@1"
 EVENTOS_POR_ENVIO = 25    # o máximo que o Aptabase aceita de uma vez
 ENVIAR_A_CADA = 60        # segundos
